@@ -12,6 +12,8 @@
 
 #include <iostream>
 #include <vector>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
 
 
 //////////////////////////////////////////////////////////////
