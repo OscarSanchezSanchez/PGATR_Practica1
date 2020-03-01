@@ -12,8 +12,6 @@
 
 #include <iostream>
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
 
 
 //////////////////////////////////////////////////////////////
@@ -51,6 +49,7 @@ unsigned int emiTexId;
 struct program
 {
 	unsigned int vshader;
+	unsigned int gshader;
 	unsigned int fshader;
 	unsigned int program;
 
@@ -65,6 +64,7 @@ struct uniform
 	int uModelViewMat;
 	int uModelViewProjMat;
 	int uNormalMat;
+	int uProjectionMatrix;
 };
 
 std::vector<uniform> uniforms(2);
@@ -112,7 +112,7 @@ void mouseMotionFunc(int x, int y);
 //Funciones de inicialización y destrucción
 void initContext(int argc, char** argv);
 void initOGL();
-void initShader(const char *vname, const char *fname, struct program *program, struct uniform *uniform);
+void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform);
 void initObj();
 void destroy();
 
@@ -133,8 +133,8 @@ int main(int argc, char** argv)
 
 	initContext(argc, argv);
 	initOGL();
-	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", &programs[0], &uniforms[0]);
-	initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
+	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo", &programs[0], &uniforms[0]);
+	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v1.geo", &programs[1], &uniforms[1]);
 
 	initObj();
 
@@ -195,13 +195,17 @@ void destroy()
 {
 	glDetachShader(programs[0].program, programs[0].vshader);
 	glDetachShader(programs[0].program, programs[0].fshader);
+	glDetachShader(programs[0].program, programs[0].gshader);
 	glDeleteShader(programs[0].vshader);
 	glDeleteShader(programs[0].fshader);
+	glDeleteShader(programs[0].gshader);
 	glDeleteProgram(programs[0].program);
 	glDetachShader(programs[1].program, programs[1].vshader);
 	glDetachShader(programs[1].program, programs[1].fshader);
+	glDetachShader(programs[1].program, programs[1].gshader);
 	glDeleteShader(programs[1].vshader);
 	glDeleteShader(programs[1].fshader);
+	glDeleteShader(programs[1].gshader);
 	glDeleteProgram(programs[1].program);
 
 	if (inPos != -1) glDeleteBuffers(1, &posVBO);
@@ -216,14 +220,16 @@ void destroy()
 
 }
 
-void initShader(const char *vname, const char *fname, struct program *program, struct uniform *uniform)
+void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform)
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
 	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
+	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
 	glAttachShader(program->program, program->fshader);
+	glAttachShader(program->program, program->gshader);
 	glLinkProgram(program->program);
 
 	//comprobacion de errores en el enlazado de shader al programa
@@ -419,7 +425,8 @@ void renderFunc()
 			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
 
 		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, cubeNTriangleIndex * 3, GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_TRIANGLES, cubeNTriangleIndex * 3,
+			GL_UNSIGNED_INT, (void*)0);
 
 	}
 	//Texturas  
@@ -454,18 +461,18 @@ void idleFunc()
 	models[0] = glm::mat4(1.0f);
 	static float angle = 0.0f;
 	angle = (angle > 3.141592f * 2.0f) ? 0 : angle + 0.01f;
-	models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
+	//models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
 	glutPostRedisplay();
 
 	models[1] = glm::mat4(1.0f);
 	//rotacion sobre eje y
-	models[1] = glm::rotate(models[1], angle, glm::vec3(0, 4, 0));
+	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 4, 0));
 
 	//translacion sobre x para desplazar el cuadrado
 	models[1] = glm::translate(models[1], glm::vec3(3, 0, 0));
 
 	//rotacion sobre Y para simular la orbitacion del objeto
-	models[1] = glm::rotate(models[1], angle, glm::vec3(0, 1, 0));
+	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 1, 0));
 
 	glutPostRedisplay();
 }
