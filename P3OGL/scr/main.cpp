@@ -53,7 +53,6 @@ struct program
 	unsigned int gshader;
 	unsigned int fshader;
 	unsigned int program;
-
 };
 
 std::vector<program> programs(1);
@@ -119,6 +118,7 @@ void initObj(Model model);
 void destroy();
 
 Model myModel("obj/teapot.obj");
+
 //Carga el shader indicado, devuele el ID del shader
 //!Por implementar
 GLuint loadShader(const char *fileName, GLenum type);
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
-	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", &programs[0], &uniforms[0]);
+	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.geo", "../shaders_P3/shader.v0.frag", &programs[0], &uniforms[0]);
 
 	initObj(myModel);
 
@@ -225,13 +225,13 @@ void destroy()
 void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform)
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
+	//program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
 	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
-	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
+	//glAttachShader(program->program, program->gshader);
 	glAttachShader(program->program, program->fshader);
-	glAttachShader(program->program, program->gshader);
 	glLinkProgram(program->program);
 
 	//comprobacion de errores en el enlazado de shader al programa
@@ -266,7 +266,7 @@ void initShader(const char *vname, const char *fname, const char *gname, struct 
 	inNormal = glGetAttribLocation(program->program, "inNormal");
 	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
 
-	glUseProgram(program->program);
+	//glUseProgram(program->program);
 	if (uColorTex != -1) {
 		glUniform1i(uColorTex, 0);
 	}
@@ -369,7 +369,7 @@ void initObj(Model model)
 
 	glGenBuffers(1, &triangleIndexVBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int) * 3, &model.indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int), &model.indices[0], GL_STATIC_DRAW);
 
 	colorTexId = loadTex("../img/color2.png");
 	emiTexId = loadTex("../img/emissive.png");
@@ -467,7 +467,7 @@ void renderFunc()
 			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
 
 		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_TRIANGLES, myModel.indices.size(), GL_UNSIGNED_INT, (void*)0);
 
 	}
 	//Texturas  
@@ -479,7 +479,7 @@ void renderFunc()
 	
 
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, cubeNTriangleIndex * 3,
+	glDrawElements(GL_TRIANGLES, myModel.indices.size(),
 		GL_UNSIGNED_INT, (void*)0);
 
 	glutSwapBuffers();

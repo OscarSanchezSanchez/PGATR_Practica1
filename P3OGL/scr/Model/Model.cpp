@@ -59,3 +59,4 @@ void Model::loadOBJFile()
 		file.close();
 	}
 }
+
