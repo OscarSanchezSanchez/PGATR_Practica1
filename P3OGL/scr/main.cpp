@@ -12,8 +12,7 @@
 
 #include <iostream>
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
+#include "Model/Model.h"
 
 
 //////////////////////////////////////////////////////////////
@@ -56,7 +55,7 @@ struct program
 
 };
 
-std::vector<program> programs(2);
+std::vector<program> programs(1);
 
 
 //Variables Uniform
@@ -67,7 +66,7 @@ struct uniform
 	int uNormalMat;
 };
 
-std::vector<uniform> uniforms(2);
+std::vector<uniform> uniforms(1);
 
 //Variables uniformes posición e intesidad de la luz
 int uLightPosition;
@@ -114,9 +113,10 @@ void initContext(int argc, char** argv);
 void initOGL();
 void initShader(const char *vname, const char *fname, struct program *program, struct uniform *uniform);
 void initObj();
+void initObj(Model model);
 void destroy();
 
-
+Model myModel("obj/teapot.obj");
 //Carga el shader indicado, devuele el ID del shader
 //!Por implementar
 GLuint loadShader(const char *fileName, GLenum type);
@@ -134,9 +134,9 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", &programs[0], &uniforms[0]);
-	initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
+	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
 
-	initObj();
+	initObj(myModel);
 
 	glutMainLoop();
 
@@ -329,6 +329,46 @@ void initObj(){
 
 }
 
+void initObj(Model model)
+{
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+
+	glGenBuffers(1, &posVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, posVBO);
+	glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(float) * 3, &model.vertices[0], GL_STATIC_DRAW);
+
+
+
+	if (inPos != -1)
+	{
+		glGenBuffers(1, &posVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, posVBO);
+		glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(float) * 3,
+			&model.vertices[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(inPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(inPos);
+	}
+	if (inNormal != -1)
+	{
+		glGenBuffers(1, &normalVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+		glBufferData(GL_ARRAY_BUFFER, model.normals.size() * sizeof(float) * 3, &model.normals[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(inNormal);
+	}
+
+	glGenBuffers(1, &triangleIndexVBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int) * 3, &model.indices[0], GL_STATIC_DRAW);
+
+	colorTexId = loadTex("../img/color2.png");
+	emiTexId = loadTex("../img/emissive.png");
+	models[0] = glm::mat4(1.0f);
+	models[1] = glm::mat4(1.0f);
+}
+
 GLuint loadShader(const char *fileName, GLenum type){ 
 
 	unsigned int fileLen;
@@ -419,7 +459,7 @@ void renderFunc()
 			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
 
 		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, cubeNTriangleIndex * 3, GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_TRIANGLES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
 
 	}
 	//Texturas  
@@ -452,20 +492,20 @@ void resizeFunc(int width, int height)
 void idleFunc()
 {
 	models[0] = glm::mat4(1.0f);
-	static float angle = 0.0f;
-	angle = (angle > 3.141592f * 2.0f) ? 0 : angle + 0.01f;
-	models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
+	//static float angle = 0.0f;
+	//angle = (angle > 3.141592f * 2.0f) ? 0 : angle + 0.01f;
+	//models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
 	glutPostRedisplay();
 
-	models[1] = glm::mat4(1.0f);
+	//models[1] = glm::mat4(1.0f);
 	//rotacion sobre eje y
-	models[1] = glm::rotate(models[1], angle, glm::vec3(0, 4, 0));
+	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 4, 0));
 
 	//translacion sobre x para desplazar el cuadrado
-	models[1] = glm::translate(models[1], glm::vec3(3, 0, 0));
+	//models[1] = glm::translate(models[1], glm::vec3(3, 0, 0));
 
 	//rotacion sobre Y para simular la orbitacion del objeto
-	models[1] = glm::rotate(models[1], angle, glm::vec3(0, 1, 0));
+	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 1, 0));
 
 	glutPostRedisplay();
 }
