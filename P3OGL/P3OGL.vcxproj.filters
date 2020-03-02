@@ -7,6 +7,12 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{5733b9ec-8bbc-47f2-ba7e-82b2f9eb2ce9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Model">
+      <UniqueIdentifier>{2f6eebd6-e059-441d-a1b6-bac0cc41bdfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Shader">
+      <UniqueIdentifier>{e9e2eedb-095e-48ff-93cc-eb273a52d5a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="scr\BOX.h">
@@ -15,6 +21,15 @@
     <ClInclude Include="scr\auxiliar.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="scr\Model\Model.h">
+      <Filter>src\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="scr\Model\OBJ_loader.h">
+      <Filter>src\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="scr\Shader\Shader.h">
+      <Filter>src\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\main.cpp">
@@ -22,6 +37,12 @@
     </ClCompile>
     <ClCompile Include="scr\auxiliar.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="scr\Model\Model.cpp">
+      <Filter>src\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="scr\Shader\Shader.cpp">
+      <Filter>src\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +56,21 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="..\shaders_P3\shader.v1.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.v0.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\Shader.v1.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.v2.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\Shader.v2.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.v2.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

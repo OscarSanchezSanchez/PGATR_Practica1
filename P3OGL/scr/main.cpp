@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
-	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", &programs[0], &uniforms[0]);
+	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v2.geo", &programs[0], &uniforms[0]);
 
 	initObj(myModel);
 
@@ -502,7 +502,7 @@ void idleFunc()
 	models[0] = glm::mat4(1.0f);
 	static float angle = 0.0f;
 	angle = (angle > 3.141592f * 2.0f) ? 0 : angle + 0.01f;
-	models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
+	//models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));
 	glutPostRedisplay();
 
 	//models[1] = glm::mat4(1.0f);
