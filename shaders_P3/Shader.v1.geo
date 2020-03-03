@@ -1,4 +1,4 @@
-#version 330 core
+#version 400
 
 layout(triangles) in;
 
@@ -10,14 +10,14 @@ float normal_length = 1.0;
 
 uniform mat4 modelViewProj;
 
-in vec3 vNormal[3];
+in vec3 teNormal[3];
 
 void main()
 {
   for(int i=0; i < gl_in.length(); i++)
   {
     gl_Position = modelViewProj * gl_in[i].gl_Position;
-    vec3 N = vNormal[i];
+    vec3 N = teNormal[i];
     EmitVertex();
     
     gl_Position = modelViewProj * (gl_in[i].gl_Position + vec4(N * normal_length, 0.0));
