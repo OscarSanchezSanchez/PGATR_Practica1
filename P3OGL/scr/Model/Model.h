@@ -10,8 +10,16 @@ public:
 	std::vector < glm::vec2 > uvs;
 	std::vector < glm::vec3 > normals;
 	std::vector <int> indices;
-	
-	
+
+	//uniform 
+	unsigned int uModelViewMat;
+	unsigned int uModelViewProjMat;
+	unsigned int uNormalMat;
+	unsigned int uProjectionMatrix;
+	unsigned int uLightPosition;
+	unsigned int uLightIntensity;
+
+
 	//void processOBJString(char* stringObj);
 	
 private:

@@ -18,6 +18,9 @@
 //////////////////////////////////////////////////////////////
 // Datos que se almacenan en la memoria de la CPU
 //////////////////////////////////////////////////////////////
+std::vector<Model> myModels;
+
+
 
 //Matrices
 glm::mat4	proj = glm::mat4(1.0f);
@@ -115,10 +118,8 @@ void initContext(int argc, char** argv);
 void initOGL();
 void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform);
 void initObj();
-void initObj(Model model);
 void destroy();
 
-Model myModel("obj/teapot.obj");
 //Carga el shader indicado, devuele el ID del shader
 //!Por implementar
 GLuint loadShader(const char *fileName, GLenum type);
@@ -137,8 +138,11 @@ int main(int argc, char** argv)
 	initOGL();
 	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v2.geo", &programs[0], &uniforms[0]);
-
-	initObj(myModel);
+	Model tetera("obj/teapot.obj");
+	Model tetera2("obj/teapot.obj");
+	myModels.push_back(tetera);
+	//myModels.push_back(tetera2);
+	initObj();
 
 	glutMainLoop();
 
@@ -225,13 +229,13 @@ void destroy()
 void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform)
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
-	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
 	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
+	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
-	glAttachShader(program->program, program->fshader);
 	glAttachShader(program->program, program->gshader);
+	glAttachShader(program->program, program->fshader);
 	glLinkProgram(program->program);
 
 	//comprobacion de errores en el enlazado de shader al programa
@@ -266,7 +270,7 @@ void initShader(const char *vname, const char *fname, const char *gname, struct 
 	inNormal = glGetAttribLocation(program->program, "inNormal");
 	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
 
-	glUseProgram(program->program);
+	//glUseProgram(program->program);
 	if (uColorTex != -1) {
 		glUniform1i(uColorTex, 0);
 	}
@@ -277,105 +281,58 @@ void initShader(const char *vname, const char *fname, const char *gname, struct 
 
 }
 void initObj(){
-
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-
-	glGenBuffers(1, &posVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-	glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 3, cubeVertexPos, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &colorVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-	glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 3, cubeVertexColor, GL_STATIC_DRAW);
-
-
-	if (inPos != -1)
+	for(Model model: myModels)//este buble tiene q ir en el main y la funcion en model
 	{
 		glGenBuffers(1, &posVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-		glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 3,
-			cubeVertexPos, GL_STATIC_DRAW);
-		glVertexAttribPointer(inPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inPos);
-	}
-	if (inColor != -1)
-	{
-		glGenBuffers(1, &colorVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-		glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 3,
-			cubeVertexColor, GL_STATIC_DRAW);
-		glVertexAttribPointer(inColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inColor);
-	}
-	if (inNormal != -1)
-	{
-		glGenBuffers(1, &normalVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
-		glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 3,cubeVertexNormal, GL_STATIC_DRAW);
-		glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inNormal);
-	}
-	if (inTexCoord != -1)
-	{
-		glGenBuffers(1, &texCoordVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, texCoordVBO);
-		glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 2,cubeVertexTexCoord, GL_STATIC_DRAW);
-		glVertexAttribPointer(inTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inTexCoord);
-	}
+		glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(float) * 3, &model.vertices[0], GL_STATIC_DRAW);
 
-	glGenBuffers(1, &triangleIndexVBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,cubeNTriangleIndex * sizeof(unsigned int) * 3, cubeTriangleIndex,GL_STATIC_DRAW);
-
-	colorTexId = loadTex("../img/color2.png");  
-	emiTexId = loadTex("../img/emissive.png");
-	models[0] = glm::mat4(1.0f);
-	models[1] = glm::mat4(1.0f);
-
-}
-
-void initObj(Model model)
-{
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-
-	glGenBuffers(1, &posVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-	glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(float) * 3, &model.vertices[0], GL_STATIC_DRAW);
-
-
-
-	if (inPos != -1)
-	{
-		glGenBuffers(1, &posVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-		glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(float) * 3,
-			&model.vertices[0], GL_STATIC_DRAW);
-		glVertexAttribPointer(inPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inPos);
-	}
-	if (inNormal != -1)
-	{
 		glGenBuffers(1, &normalVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
 		glBufferData(GL_ARRAY_BUFFER, model.normals.size() * sizeof(float) * 3, &model.normals[0], GL_STATIC_DRAW);
-		glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(inNormal);
+
+		glGenBuffers(1, &triangleIndexVBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int) * 3, &model.indices[0], GL_STATIC_DRAW);
+
+		glGenBuffers(1, &texCoordVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, texCoordVBO);
+		glBufferData(GL_ARRAY_BUFFER, model.uvs.size() * sizeof(float) * 2, &model.uvs[0], GL_STATIC_DRAW);
+
+		if (inPos != -1)
+		{
+			glVertexAttribPointer(inPos, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(inPos);
+		}
+		if (inColor != -1)
+		{
+			glVertexAttribPointer(inColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(inColor);
+		}
+		if (inNormal != -1)
+		{
+			glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(inNormal);
+		}
+		if (inTexCoord != -1)
+		{
+			glVertexAttribPointer(inTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(inTexCoord);
+		}
+
+
+		colorTexId = loadTex("../img/color2.png");
+		emiTexId = loadTex("../img/emissive.png");
+		models[0] = glm::mat4(1.0f);
+		models[1] = glm::mat4(1.0f);
+
 	}
-
-	glGenBuffers(1, &triangleIndexVBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int) * 3, &model.indices[0], GL_STATIC_DRAW);
-
-	colorTexId = loadTex("../img/color2.png");
-	emiTexId = loadTex("../img/emissive.png");
-	models[0] = glm::mat4(1.0f);
-	models[1] = glm::mat4(1.0f);
+	
 }
+
 
 GLuint loadShader(const char *fileName, GLenum type){ 
 
@@ -465,9 +422,12 @@ void renderFunc()
 
 		if (uLightPosition != -1)
 			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
-
-		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+		for (Model model: myModels)
+		{
+			glBindVertexArray(vao);
+			glDrawElements(GL_TRIANGLES, model.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+		}
+		
 
 	}
 	//Texturas  
@@ -510,7 +470,7 @@ void idleFunc()
 	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 4, 0));
 
 	//translacion sobre x para desplazar el cuadrado
-	//models[1] = glm::translate(models[1], glm::vec3(3, 0, 0));
+	models[1] = glm::translate(models[1], glm::vec3(3, 0, 0));
 
 	//rotacion sobre Y para simular la orbitacion del objeto
 	//models[1] = glm::rotate(models[1], angle, glm::vec3(0, 1, 0));
