@@ -31,6 +31,15 @@ float displacementLight = 5.0f;
 //Giro de c�mara por teclado
 float yaw_angle = 0.01f;
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
+glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+float angulo = -3.1415 * 0.5f;
+
+int widthVentana = 500;
+int heightVentana = 500;
+float radio = 6;
+glm::vec2 antPos;
 
 //Movimiento de c�mara con el rat�n
 const float orbitAngle = 0.1f;
@@ -50,6 +59,8 @@ unsigned int emiTexId;
 struct program
 {
 	unsigned int vshader;
+	unsigned int tcshader;
+	unsigned int teshader;
 	unsigned int gshader;
 	unsigned int fshader;
 	unsigned int program;
@@ -113,7 +124,8 @@ void mouseMotionFunc(int x, int y);
 //Funciones de inicialización y destrucción
 void initContext(int argc, char** argv);
 void initOGL();
-void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform);
+void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
+	struct program* program, struct uniform* uniform); 
 void initObj();
 void initObj(Model model);
 void destroy();
@@ -136,7 +148,8 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
-	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v2.geo", &programs[0], &uniforms[0]);
+	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
+		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0], &uniforms[0]);
 
 	initObj(myModel);
 
@@ -152,7 +165,7 @@ int main(int argc, char** argv)
 void initContext(int argc, char** argv){
 
 	glutInit(&argc, argv);
-	glutInitContextVersion(3, 3);
+	glutInitContextVersion(4, 0);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -196,16 +209,24 @@ void initOGL(){
 void destroy()
 {
 	glDetachShader(programs[0].program, programs[0].vshader);
+	glDetachShader(programs[0].program, programs[0].tcshader);
+	glDetachShader(programs[0].program, programs[0].teshader);
 	glDetachShader(programs[0].program, programs[0].fshader);
 	glDetachShader(programs[0].program, programs[0].gshader);
 	glDeleteShader(programs[0].vshader);
+	glDeleteShader(programs[0].tcshader);
+	glDeleteShader(programs[0].teshader);
 	glDeleteShader(programs[0].fshader);
 	glDeleteShader(programs[0].gshader);
 	glDeleteProgram(programs[0].program);
 	glDetachShader(programs[1].program, programs[1].vshader);
+	glDetachShader(programs[1].program, programs[1].tcshader);
+	glDetachShader(programs[1].program, programs[1].teshader);
 	glDetachShader(programs[1].program, programs[1].fshader);
 	glDetachShader(programs[1].program, programs[1].gshader);
 	glDeleteShader(programs[1].vshader);
+	glDeleteShader(programs[1].tcshader);
+	glDeleteShader(programs[1].teshader);
 	glDeleteShader(programs[1].fshader);
 	glDeleteShader(programs[1].gshader);
 	glDeleteProgram(programs[1].program);
@@ -222,16 +243,21 @@ void destroy()
 
 }
 
-void initShader(const char *vname, const char *fname, const char *gname, struct program *program, struct uniform *uniform)
+void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
+	struct program* program, struct uniform* uniform) 
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
 	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
 	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
+	program->tcshader = loadShader(tcname, GL_TESS_CONTROL_SHADER);
+	program->teshader = loadShader(tename, GL_TESS_EVALUATION_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
 	glAttachShader(program->program, program->fshader);
 	glAttachShader(program->program, program->gshader);
+	glAttachShader(program->program, program->tcshader);
+	glAttachShader(program->program, program->teshader);
 	glLinkProgram(program->program);
 
 	//comprobacion de errores en el enlazado de shader al programa
@@ -467,7 +493,7 @@ void renderFunc()
 			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
 
 		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(GL_PATCHES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
 
 	}
 	//Texturas  
@@ -479,7 +505,7 @@ void renderFunc()
 	
 
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, cubeNTriangleIndex * 3,
+	glDrawElements(GL_PATCHES, cubeNTriangleIndex * 3,
 		GL_UNSIGNED_INT, (void*)0);
 
 	glutSwapBuffers();
@@ -520,53 +546,28 @@ void idleFunc()
 
 void keyboardFunc(unsigned char key, int x, int y)
 {
-    std::cout << "Se ha pulsado la tecla " << key << std::endl << std::endl;
-
-    glm::mat4 rotation(1.0f);
-
-    switch (key)
-    {
-    case 'w':
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, displacement));
-        break;
-    case 's':
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -displacement));
-        break;
-    case 'a':
-        view = glm::translate(view, glm::vec3(displacement, 0.0f, 0.0f));
-        break;
-    case 'd':
-        view = glm::translate(view, glm::vec3(-displacement, 0.0f, 0.0f));
-        break;
-    case 'q':
-        rotation = glm::rotate(rotation, -yaw_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-        view = rotation * view;
-        break;
-    case 'e':
-        rotation = glm::rotate(rotation, yaw_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-        view = rotation * view;
-        break;
-    case 'l':
-        lightIntensity = glm::min(lightIntensity + glm::vec3(0.1f), glm::vec3(1.0f));
-        break;
-    case 'm':
-        lightIntensity = glm::min(lightIntensity - glm::vec3(0.1f), glm::vec3(1.0f));
-        break;
-    case 'u':
-        lightPosition.y += displacementLight;
-        break;
-    case 'j':
-        lightPosition.y -= displacementLight;
-        break;
-	case 'h':
-		lightPosition.x -= displacementLight;
-		break;
-	case 'k':
-		lightPosition.x += displacementLight;
-		break;
-    default:
-        break;
-    }
+	// Movimiento FPS
+	float speed = 0.1f;
+	if (key == 'w' || key == 'W')
+		cameraPos += speed * cameraFront;
+	else if (key == 's' || key == 'S')
+		cameraPos -= speed * cameraFront;
+	else if (key == 'a' || key == 'A')
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+	else if (key == 'd' || key == 'D')
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed;
+	else if (key == 'x' || key == 'X') {
+		angulo = (angulo < 6.2830f) ? angulo + 0.1f : 0.0f;
+		cameraFront.x = cos(angulo);
+		cameraFront.z = sin(angulo);
+	}
+	else if (key == 'z' || key == 'Z') {
+		angulo = (angulo > -6.2830f) ? angulo - 0.1f : 0.0f;
+		cameraFront.x = cos(angulo);
+		cameraFront.z = sin(angulo);
+	}
+	cameraFront = glm::normalize(cameraFront);
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     glutPostRedisplay();
 
