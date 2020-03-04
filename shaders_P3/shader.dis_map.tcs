@@ -1,0 +1,24 @@
+#version 400 core
+
+// define the number of CPs in the output patch
+layout (vertices = 3) out;
+
+//uniform vec3 gEyeWorldPos;
+
+// attributes of the input CPs
+in vec3 vPos[];
+in vec2 vTexCoord[];
+in vec3 vNormal[];
+
+// attributes of the output CPs
+out vec3 tcPos[];
+out vec2 tcTexCoord[];
+out vec3 tcNormal[];
+
+void main()
+{
+    // Set the control points of the output patch
+    tcTexCoord[gl_InvocationID] = vTexCoord[gl_InvocationID];
+    tcNormal[gl_InvocationID] = vNormal[gl_InvocationID];
+    tcPos[gl_InvocationID] = vPos[gl_InvocationID];
+}

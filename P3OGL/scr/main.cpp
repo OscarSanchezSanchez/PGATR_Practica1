@@ -67,7 +67,8 @@ struct program
 
 };
 
-std::vector<program> programs(1);
+program programGEO;
+program programTES;
 
 
 //Variables Uniform
@@ -77,9 +78,11 @@ struct uniform
 	int uModelViewProjMat;
 	int uNormalMat;
 	int uProjectionMatrix;
+	int uModelMatrix;
+	int uViewProjMatrix;
 };
 
-std::vector<uniform> uniforms(1);
+std::vector<uniform> uniforms(2);
 
 //Variables uniformes posición e intesidad de la luz
 int uLightPosition;
@@ -126,11 +129,12 @@ void initContext(int argc, char** argv);
 void initOGL();
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
 	struct program* program, struct uniform* uniform); 
+void initShader(const char* vname, const char* fname, struct program* program, struct uniform* uniform);
 void initObj();
 void initObj(Model model);
 void destroy();
 
-Model myModel("obj/teapot.obj");
+Model myModel("obj/puto_mono.obj");
 //Carga el shader indicado, devuele el ID del shader
 //!Por implementar
 GLuint loadShader(const char *fileName, GLenum type);
@@ -147,9 +151,8 @@ int main(int argc, char** argv)
 
 	initContext(argc, argv);
 	initOGL();
-	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programs[1], &uniforms[1]);
-	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
-		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0], &uniforms[0]);
+	//initShader("../shaders_P3/shader.v1.vert", "../shaders_P3/shader.v1.frag", &programGEO, &uniforms[0]);
+	initShader("../shaders_P3/shader.dis_map.vert", "../shaders_P3/shader.dis_map.frag", "../shaders_P3/shader.dis_map.geo","../shaders_P3/shader.dis_map.tcs", "../shaders_P3/shader.dis_map.tes", &programTES, &uniforms[0]);
 
 	initObj(myModel);
 
@@ -208,28 +211,28 @@ void initOGL(){
 
 void destroy()
 {
-	glDetachShader(programs[0].program, programs[0].vshader);
-	glDetachShader(programs[0].program, programs[0].tcshader);
-	glDetachShader(programs[0].program, programs[0].teshader);
-	glDetachShader(programs[0].program, programs[0].fshader);
-	glDetachShader(programs[0].program, programs[0].gshader);
-	glDeleteShader(programs[0].vshader);
-	glDeleteShader(programs[0].tcshader);
-	glDeleteShader(programs[0].teshader);
-	glDeleteShader(programs[0].fshader);
-	glDeleteShader(programs[0].gshader);
-	glDeleteProgram(programs[0].program);
-	glDetachShader(programs[1].program, programs[1].vshader);
-	glDetachShader(programs[1].program, programs[1].tcshader);
-	glDetachShader(programs[1].program, programs[1].teshader);
-	glDetachShader(programs[1].program, programs[1].fshader);
-	glDetachShader(programs[1].program, programs[1].gshader);
-	glDeleteShader(programs[1].vshader);
-	glDeleteShader(programs[1].tcshader);
-	glDeleteShader(programs[1].teshader);
-	glDeleteShader(programs[1].fshader);
-	glDeleteShader(programs[1].gshader);
-	glDeleteProgram(programs[1].program);
+	glDetachShader(programGEO.program, programGEO.vshader);
+	glDetachShader(programGEO.program, programGEO.tcshader);
+	glDetachShader(programGEO.program, programGEO.teshader);
+	glDetachShader(programGEO.program, programGEO.fshader);
+	glDetachShader(programGEO.program, programGEO.gshader);
+	glDeleteShader(programGEO.vshader);
+	glDeleteShader(programGEO.tcshader);
+	glDeleteShader(programGEO.teshader);
+	glDeleteShader(programGEO.fshader);
+	glDeleteShader(programGEO.gshader);
+	glDeleteProgram(programGEO.program);
+	glDetachShader(programTES.program, programTES.vshader);
+	glDetachShader(programTES.program, programTES.tcshader);
+	glDetachShader(programTES.program, programTES.teshader);
+	glDetachShader(programTES.program, programTES.fshader);
+	glDetachShader(programTES.program, programTES.gshader);
+	glDeleteShader(programTES.vshader);
+	glDeleteShader(programTES.tcshader);
+	glDeleteShader(programTES.teshader);
+	glDeleteShader(programTES.fshader);
+	glDeleteShader(programTES.gshader);
+	glDeleteProgram(programTES.program);
 
 	if (inPos != -1) glDeleteBuffers(1, &posVBO);
 	if (inColor != -1) glDeleteBuffers(1, &colorVBO);
@@ -248,16 +251,74 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
 	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
-	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
+	//program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
 	program->tcshader = loadShader(tcname, GL_TESS_CONTROL_SHADER);
 	program->teshader = loadShader(tename, GL_TESS_EVALUATION_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
 	glAttachShader(program->program, program->fshader);
-	glAttachShader(program->program, program->gshader);
+	//glAttachShader(program->program, program->gshader);
 	glAttachShader(program->program, program->tcshader);
 	glAttachShader(program->program, program->teshader);
+	glLinkProgram(program->program);
+
+	//comprobacion de errores en el enlazado de shader al programa
+	int linked;
+	glGetProgramiv(program->program, GL_LINK_STATUS, &linked);
+	if (!linked)
+	{
+		//Calculamos una cadena de error
+		GLint logLen;
+		glGetProgramiv(program->program, GL_INFO_LOG_LENGTH, &logLen);
+		char* logString = new char[logLen];
+		glGetProgramInfoLog(program->program, logLen, NULL, logString);
+		std::cout << "Error: " << logString << std::endl;
+		delete[] logString;
+		glDeleteProgram(program->program);
+		program->program = 0;
+		exit(-1);
+	}
+
+	uniform->uNormalMat = glGetUniformLocation(program->program, "normal");
+	uniform->uModelViewMat = glGetUniformLocation(program->program, "modelView");
+	uniform->uModelViewProjMat = glGetUniformLocation(program->program, "modelViewProj");
+	uniform->uModelMatrix = glGetUniformLocation(program->program, "model");
+	uniform->uViewProjMatrix = glGetUniformLocation(program->program, "viewProj");
+
+
+	uColorTex = glGetUniformLocation(program->program, "colorTex");
+	uEmiTex = glGetUniformLocation(program->program, "emiTex");
+
+	uLightPosition = glGetUniformLocation(program->program, "lightPosition");
+	uLightIntensity = glGetUniformLocation(program->program, "lightIntensity");
+
+	inPos = glGetAttribLocation(program->program, "inPos");
+	inColor = glGetAttribLocation(program->program, "inColor");
+	inNormal = glGetAttribLocation(program->program, "inNormal");
+	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
+
+	glUseProgram(program->program);
+	
+	if (uColorTex != -1) {
+		glUniform1i(uColorTex, 0);
+	}
+
+	if (uEmiTex != -1) {
+		glUniform1i(uEmiTex, 1);
+	}
+
+}
+
+//first
+void initShader(const char* vname, const char* fname, program* program, uniform* uniform)
+{
+	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
+	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
+
+	program->program = glCreateProgram();
+	glAttachShader(program->program, program->vshader);
+	glAttachShader(program->program, program->fshader);
 	glLinkProgram(program->program);
 
 	//comprobacion de errores en el enlazado de shader al programa
@@ -292,7 +353,6 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	inNormal = glGetAttribLocation(program->program, "inNormal");
 	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
 
-	glUseProgram(program->program);
 	if (uColorTex != -1) {
 		glUniform1i(uColorTex, 0);
 	}
@@ -300,7 +360,6 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	if (uEmiTex != -1) {
 		glUniform1i(uEmiTex, 1);
 	}
-
 }
 void initObj(){
 
@@ -356,7 +415,7 @@ void initObj(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,cubeNTriangleIndex * sizeof(unsigned int) * 3, cubeTriangleIndex,GL_STATIC_DRAW);
 
-	colorTexId = loadTex("../img/color2.png");  
+	colorTexId = loadTex("../img/descarga.png");  
 	emiTexId = loadTex("../img/emissive.png");
 	models[0] = glm::mat4(1.0f);
 	models[1] = glm::mat4(1.0f);
@@ -392,10 +451,18 @@ void initObj(Model model)
 		glVertexAttribPointer(inNormal, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(inNormal);
 	}
+	if (inTexCoord != -1)
+	{
+		glGenBuffers(1, &texCoordVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, texCoordVBO);
+		glBufferData(GL_ARRAY_BUFFER, cubeNVertex * sizeof(float) * 2, cubeVertexTexCoord, GL_STATIC_DRAW);
+		glVertexAttribPointer(inTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(inTexCoord);
+	}
 
 	glGenBuffers(1, &triangleIndexVBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int) * 3, &model.indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.indices.size() * sizeof(unsigned int), &model.indices[0], GL_STATIC_DRAW);
 
 	colorTexId = loadTex("../img/color2.png");
 	emiTexId = loadTex("../img/emissive.png");
@@ -469,47 +536,67 @@ unsigned int loadTex(const char *fileName){
 void renderFunc()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	for (size_t i = 0; i < programs.size(); i++)
-	{
-		glUseProgram(programs[i].program);
 
-		glm::mat4 modelView = view * models[i];
-		glm::mat4 modelViewProj = proj * modelView;
-		glm::mat4 normal = glm::transpose(glm::inverse(modelView));
+	glUseProgram(programTES.program);
 
-		if (uniforms[i].uModelViewMat != -1)
-			glUniformMatrix4fv(uniforms[i].uModelViewMat, 1, GL_FALSE, &(modelView[0][0]));
+	glm::mat4 modelView = view * models[0];
+	glm::mat4 modelViewProj = proj * modelView;
+	glm::mat4 normal = glm::transpose(glm::inverse(modelView));
+	glm::mat4 viewProj = view * proj;
 
-		if (uniforms[i].uModelViewProjMat != -1)
-			glUniformMatrix4fv(uniforms[i].uModelViewProjMat, 1, GL_FALSE, &(modelViewProj[0][0]));
+	if (uniforms[0].uModelViewMat != -1)
+		glUniformMatrix4fv(uniforms[0].uModelViewMat, 1, GL_FALSE, &(modelView[0][0]));
 
-		if (uniforms[i].uNormalMat != -1)
-			glUniformMatrix4fv(uniforms[i].uNormalMat, 1, GL_FALSE,	&(normal[0][0]));
+	if (uniforms[0].uModelViewProjMat != -1)
+		glUniformMatrix4fv(uniforms[0].uModelViewProjMat, 1, GL_FALSE, &(modelViewProj[0][0]));
 
-		if (uLightIntensity != -1)
-			glUniform3fv(uLightIntensity, 1, &lightIntensity[0]);
+	if (uniforms[0].uNormalMat != -1)
+		glUniformMatrix4fv(uniforms[0].uNormalMat, 1, GL_FALSE,	&(normal[0][0]));
 
-		if (uLightPosition != -1)
-			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
+	if (uniforms[0].uNormalMat != -1)
+		glUniformMatrix4fv(uniforms[0].uModelMatrix, 1, GL_FALSE, &(models[0][0][0]));
 
-		glBindVertexArray(vao);
-		glDrawElements(GL_PATCHES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+	if (uniforms[0].uModelViewProjMat != -1)
+		glUniformMatrix4fv(uniforms[0].uViewProjMatrix, 1, GL_FALSE, &(viewProj[0][0]));
 
-	}
+	if (uLightIntensity != -1)
+		glUniform3fv(uLightIntensity, 1, &lightIntensity[0]);
+
+	if (uLightPosition != -1)
+		glUniform3fv(uLightPosition, 1, &lightPosition[0]);
+
 	//Texturas  
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colorTexId);
 
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, emiTexId);
-	
 
 	glBindVertexArray(vao);
-	glDrawElements(GL_PATCHES, cubeNTriangleIndex * 3,
-		GL_UNSIGNED_INT, (void*)0);
+	glDrawElements(GL_PATCHES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+	/*
+	glUseProgram(programTES.program);
 
+	modelView = view * models[1];
+	modelViewProj = proj * modelView;
+	normal = glm::transpose(glm::inverse(modelView));
+
+	if (uniforms[1].uModelViewMat != -1)
+		glUniformMatrix4fv(uniforms[1].uModelViewMat, 1, GL_FALSE, &(modelView[0][0]));
+
+	if (uniforms[1].uModelViewProjMat != -1)
+		glUniformMatrix4fv(uniforms[1].uModelViewProjMat, 1, GL_FALSE, &(modelViewProj[0][0]));
+
+	if (uniforms[1].uNormalMat != -1)
+		glUniformMatrix4fv(uniforms[1].uNormalMat, 1, GL_FALSE, &(normal[0][0]));
+
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
+
+	glDrawElements(GL_PATCHES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+
+	glDrawElements(GL_TRIANGLES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
+	*/
 	glutSwapBuffers();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 void resizeFunc(int width, int height)
 {
