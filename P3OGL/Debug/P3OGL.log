@@ -1,0 +1,4 @@
+﻿cl : línea de comandos warning D9035: La opción 'Gm' está desusada y se quitará en próximas versiones
+  main.cpp
+E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(39,30): warning C4305: 'inicializando': truncamiento de 'double' a 'float'
+  P3OGL.vcxproj -> E:\oscar\my_projects\PGATR_Practica1\P3OGL\Debug\P3OGL.exe

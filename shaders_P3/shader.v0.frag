@@ -1,7 +1,6 @@
-#version 400
+#version 430
 
 out vec4 outColor;
-
 
 void main()
 {
