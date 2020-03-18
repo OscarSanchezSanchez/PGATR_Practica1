@@ -1,4 +1,4 @@
-#version 400
+#version 430
 
 layout(triangles) in;
 layout(line_strip, max_vertices=3) out;
