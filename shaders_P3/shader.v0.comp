@@ -20,7 +20,7 @@ layout (std140, binding=6) buffer Col
 layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
 const vec3 g = vec3(0., -9.8, 0.);
-const float dt = 0.1;
+const float dt = 0.001;
 
 uint gid = gl_GlobalInvocationID.x;
 

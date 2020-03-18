@@ -1,5 +1,5 @@
 ﻿cl : línea de comandos warning D9035: La opción 'Gm' está desusada y se quitará en próximas versiones
   main.cpp
-E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(39,30): warning C4305: 'inicializando': truncamiento de 'double' a 'float'
-E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(266,17): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(52,30): warning C4305: 'inicializando': truncamiento de 'double' a 'float'
+E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(274,17): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
   P3OGL.vcxproj -> E:\oscar\my_projects\PGATR_Practica1\P3OGL\Debug\P3OGL.exe

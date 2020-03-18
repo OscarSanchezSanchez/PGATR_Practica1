@@ -17,6 +17,19 @@
 #define NUM_PARTICLES 1204*1024
 #define WORK_GROUP_SIZE 128
 
+#define XMIN -1
+#define XMAX 2
+#define YMIN 0
+#define YMAX 2
+#define ZMIN 0
+#define ZMAX 2
+
+#define VXMIN 0
+#define VXMAX 0.01f
+#define VYMIN 0
+#define VYMAX 1
+#define VZMIN 0
+#define VZMAX 1
 
 //////////////////////////////////////////////////////////////
 // Datos que se almacenan en la memoria de la CPU
@@ -83,8 +96,6 @@ int uModelViewMat;
 int uModelViewProjMat;
 int uNormalMat;
 int uProjectionMatrix;
-
-
 
 //Variables uniformes posición e intesidad de la luz
 int uLightPosition;
@@ -166,18 +177,15 @@ Model myModel("obj/teapot.obj");
 int main(int argc, char** argv)
 {
 	std::locale::global(std::locale("spanish"));// acentos ;)
-
-	generateRandomPoints(positions,velocities,colors);
-
 	initContext(argc, argv);
 	initOGL();
 
-	//initComputeShader();
-	initSSBOrender("../shaders_P3/shader.v0.comp", &computePrograms[0]);
+	generateRandomPoints(positions,velocities,colors);
 
-	
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
+
+	initSSBOrender("../shaders_P3/shader.v0.comp", &computePrograms[0]);
 
 	//initObj(myModel);
 
@@ -271,15 +279,15 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 
 		//float r3 = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 		glm::vec4 aux;
-		aux.x = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
-		aux.y = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
-		aux.z = -(((float)rand() * 2) - 1) / auxFloat;
+		aux.x = XMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / XMAX));
+		aux.y = YMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / YMAX));
+		aux.z = ZMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / ZMAX));
 		aux.w = 1.0f;
 		positions.push_back(aux);
 
-		aux.x = 0.0f;
-		aux.y = 0.0f;
-		aux.z = 0.0f;
+		aux.x = VZMAX != 0.0f ? VXMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VXMAX)) : 0.0f;
+		aux.y = VYMAX != 0.0f ? VYMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VYMAX)) : 0.0f;
+		aux.z = VZMAX != 0.0f ? VZMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VZMAX)) : 0.0f;
 		aux.w = 1.0f;
 		velocities.push_back(aux);
 
@@ -613,7 +621,7 @@ void renderFunc()
 
 	glUseProgram(computePrograms[0].program);
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	glUseProgram(programs[0].program);
 	glBindVertexArray(vao);
