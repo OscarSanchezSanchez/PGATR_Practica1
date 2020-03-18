@@ -38,7 +38,7 @@ glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 float angulo = -3.1415 * 0.5f;
 
-int widthVentana = 500;
+int widthVentana = 1200;
 int heightVentana = 500;
 float radio = 6;
 glm::vec2 antPos;
@@ -211,7 +211,7 @@ void initContext(int argc, char** argv){
 	std::cout << "This system supports OpenGL Version: " << oglVersion << std::endl;
 
 	glutReshapeFunc(resizeFunc);
-	glutDisplayFunc(renderParticles);
+	glutDisplayFunc(renderFunc);
 	glutIdleFunc(idleFunc);
 	glutKeyboardFunc(keyboardFunc);
 	glutMouseFunc(mouseFunc);
@@ -231,7 +231,7 @@ void initOGL(){
 
 	proj = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 50.0f);
 	view = glm::mat4(1.0f);
-	view[3].z = -1.0f;
+	view[3].z = -5.0f;
 
 }
 
@@ -274,27 +274,33 @@ void destroy()
 
 void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::vec4>& velocities, std::vector<glm::vec4>& colors)
 {
+	float auxFloat = widthVentana / 2;
+	float HI = 500;
+	float LO = -500;
 	for (size_t i = 0; i < NUM_PARTICLES; i++)
 	{
+
+		//float r3 = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 		glm::vec4 aux;
-		aux.x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.z = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (far + 5)));
+		aux.x = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
+		aux.y = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
+		aux.z = -(((float)rand() * 2) - 1) / auxFloat;
 		aux.w = 1.0f;
 		positions.push_back(aux);
 
-		aux.x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.z = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (far + 5)));
+		aux.x = 0.1f;
+		aux.y = 0.1f;
+		aux.z = 0.1f;
 		aux.w = 1.0f;
 		velocities.push_back(aux);
 
-		aux.x = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.y = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / widthVentana));
-		aux.z = -static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (far + 5)));
+		aux.x = (((float)rand() * 2) - 1) / auxFloat;
+		aux.y = (((float)rand() * 2) - 1) / auxFloat;
+		aux.z = (((float)rand() * 2) - 1) / auxFloat;
 		aux.w = 1.0f;
 		colors.push_back(aux);
 	}
+
 }
 
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename, struct program* program) 
@@ -592,52 +598,14 @@ unsigned int loadTex(const char *fileName){
 void renderFunc()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	/*for (size_t i = 0; i < programs.size(); i++)
-	{
-		glUseProgram(programs[i].program);
 
-		glm::mat4 modelView = view * models[i];
-		glm::mat4 modelViewProj = proj * modelView;
-		glm::mat4 normal = glm::transpose(glm::inverse(modelView));
-
-		if (uniforms[i].uModelViewMat != -1)
-			glUniformMatrix4fv(uniforms[i].uModelViewMat, 1, GL_FALSE, &(modelView[0][0]));
-
-		if (uniforms[i].uModelViewProjMat != -1)
-			glUniformMatrix4fv(uniforms[i].uModelViewProjMat, 1, GL_FALSE, &(modelViewProj[0][0]));
-
-		if (uniforms[i].uNormalMat != -1)
-			glUniformMatrix4fv(uniforms[i].uNormalMat, 1, GL_FALSE,	&(normal[0][0]));
-
-		if (uLightIntensity != -1)
-			glUniform3fv(uLightIntensity, 1, &lightIntensity[0]);
-
-		if (uLightPosition != -1)
-			glUniform3fv(uLightPosition, 1, &lightPosition[0]);
-
-		glBindVertexArray(vao);*/
-		//glDrawElements(GL_PATCHES, myModel.indices.size() * 3, GL_UNSIGNED_INT, (void*)0);
-
-	glm::mat4 modelView = view * model;
-	glm::mat4 modelViewProj = proj * modelView;
-	if (uModelViewMat != -1)
-		glUniformMatrix4fv(uModelViewMat, 1, GL_FALSE, &(modelView[0][0]));
-
-	if (uModelViewProjMat != -1)
-		glUniformMatrix4fv(uModelViewProjMat, 1, GL_FALSE, &(modelViewProj[0][0]));
-		
 	
 	glUseProgram(computePrograms[0].program);
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	glUseProgram(programs[0].program);
-	glBindBuffer(GL_ARRAY_BUFFER, posSSBO);
-	glVertexPointer(4, GL_FLOAT, 0, (void*)0);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	renderParticles();
 
 
 	/*
@@ -653,7 +621,6 @@ void renderFunc()
 
 void renderParticles()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glm::mat4 modelView = view * model;
 	glm::mat4 modelViewProj = proj * modelView;
 	glm::mat4 normal = glm::transpose(glm::inverse(modelView));
@@ -681,7 +648,6 @@ void renderParticles()
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
 	glBindVertexArray(0);
-	glutSwapBuffers();
 }
 
 void resizeFunc(int width, int height)
