@@ -248,17 +248,6 @@ void destroy()
 	glDeleteShader(programs[0].fshader);
 	glDeleteShader(programs[0].gshader);
 	glDeleteProgram(programs[0].program);
-	glDetachShader(programs[1].program, programs[1].vshader);
-	glDetachShader(programs[1].program, programs[1].tcshader);
-	glDetachShader(programs[1].program, programs[1].teshader);
-	glDetachShader(programs[1].program, programs[1].fshader);
-	glDetachShader(programs[1].program, programs[1].gshader);
-	glDeleteShader(programs[1].vshader);
-	glDeleteShader(programs[1].tcshader);
-	glDeleteShader(programs[1].teshader);
-	glDeleteShader(programs[1].fshader);
-	glDeleteShader(programs[1].gshader);
-	glDeleteProgram(programs[1].program);
 
 	if (inPos != -1) glDeleteBuffers(1, &posVBO);
 	if (inColor != -1) glDeleteBuffers(1, &colorVBO);
@@ -288,9 +277,9 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 		aux.w = 1.0f;
 		positions.push_back(aux);
 
-		aux.x = 0.1f;
-		aux.y = 0.1f;
-		aux.z = 0.1f;
+		aux.x = 0.0f;
+		aux.y = 0.0f;
+		aux.z = 0.0f;
 		aux.w = 1.0f;
 		velocities.push_back(aux);
 
@@ -351,7 +340,6 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	inNormal = glGetAttribLocation(program->program, "inNormal");
 	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
 
-	glUseProgram(program->program);
 	if (uColorTex != -1) {
 		glUniform1i(uColorTex, 0);
 	}
@@ -472,9 +460,31 @@ void initObj(Model model)
 
 void initSSBOrender(const char* computeName, struct computeProgram* computeProgram)
 {
+
+	computeProgram->shader = loadShader(computeName, GL_COMPUTE_SHADER);
+	computeProgram->program = glCreateProgram();
+	glAttachShader(computeProgram->program, computeProgram->shader);
+	glLinkProgram(computeProgram->program);
+
+	//comprobacion de errores en el enlazado de shader al programa
+	int linked;
+	glGetProgramiv(computeProgram->program, GL_LINK_STATUS, &linked);
+	if (!linked)
+	{
+		//Calculamos una cadena de error
+		GLint logLen;
+		glGetProgramiv(computeProgram->program, GL_INFO_LOG_LENGTH, &logLen);
+		char* logString = new char[logLen];
+		glGetProgramInfoLog(computeProgram->program, logLen, NULL, logString);
+		std::cout << "Error: " << logString << std::endl;
+		delete[] logString;
+		glDeleteProgram(computeProgram->program);
+		computeProgram->program = 0;
+		exit(-1);
+	}
+
 	////////////////////////////////////////////    SSBO create, bind, etc   //////////////////////////////////////////////
 	
-
 	glGenBuffers(1, &posSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, posSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &positions[0], GL_STATIC_DRAW);
@@ -507,29 +517,7 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 		glVertexAttribPointer(inColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(inColor);
 	}
-
-	//////////////////////////////////////////////   Compile, bind and link shader   //////////////////////////////////////////////
-	computeProgram->shader = loadShader(computeName, GL_COMPUTE_SHADER);
-	computeProgram->program = glCreateProgram();
-	glAttachShader(computeProgram->program, computeProgram->shader);
-	glLinkProgram(computeProgram->program);
-
-	//comprobacion de errores en el enlazado de shader al programa
-	int linked;
-	glGetProgramiv(computeProgram->program, GL_LINK_STATUS, &linked);
-	if (!linked)
-	{
-		//Calculamos una cadena de error
-		GLint logLen;
-		glGetProgramiv(computeProgram->program, GL_INFO_LOG_LENGTH, &logLen);
-		char* logString = new char[logLen];
-		glGetProgramInfoLog(computeProgram->program, logLen, NULL, logString);
-		std::cout << "Error: " << logString << std::endl;
-		delete[] logString;
-		glDeleteProgram(computeProgram->program);
-		computeProgram->program = 0;
-		exit(-1);
-	}
+	
 }
 
 GLuint loadShader(const char *fileName, GLenum type){ 
@@ -597,30 +585,6 @@ unsigned int loadTex(const char *fileName){
 
 void renderFunc()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	
-	glUseProgram(computePrograms[0].program);
-	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-	glUseProgram(programs[0].program);
-	renderParticles();
-
-
-	/*
-	//Texturas  
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, colorTexId);
-
-	glActiveTexture(GL_TEXTURE0 + 1);
-	glBindTexture(GL_TEXTURE_2D, emiTexId);
-	*/
-	glutSwapBuffers();
-}
-
-void renderParticles()
-{
 	glm::mat4 modelView = view * model;
 	glm::mat4 modelViewProj = proj * modelView;
 	glm::mat4 normal = glm::transpose(glm::inverse(modelView));
@@ -644,11 +608,33 @@ void renderParticles()
 	{
 		glUniformMatrix4fv(uNormalMat, 1, GL_FALSE, &normal[0][0]);
 	}
+	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	glUseProgram(computePrograms[0].program);
+	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+	glUseProgram(programs[0].program);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
 	glBindVertexArray(0);
+
+	/*
+	//Texturas  
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colorTexId);
+
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, emiTexId);
+	*/
+	glutSwapBuffers();
 }
+
+void renderParticles()
+{
+}
+	
 
 void resizeFunc(int width, int height)
 {

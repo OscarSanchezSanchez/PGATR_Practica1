@@ -24,8 +24,6 @@ const float dt = 0.1;
 
 uint gid = gl_GlobalInvocationID.x;
 
-
-
 void main()
 {
 	vec3 p = Positions[gid].xyz;
