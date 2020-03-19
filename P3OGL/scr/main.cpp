@@ -17,10 +17,10 @@
 #define NUM_PARTICLES 1204*1024
 #define WORK_GROUP_SIZE 128
 
-#define XMIN -5
-#define XMAX 10
-#define YMIN -5
-#define YMAX 10
+#define XMIN -1
+#define XMAX 2 * 3.1415
+#define YMIN 0
+#define YMAX 0.2
 #define ZMIN 0
 #define ZMAX 2
 
@@ -285,12 +285,15 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 	float auxFloat = widthVentana / 2;
 	for (size_t i = 0; i < NUM_PARTICLES; i++)
 	{
-
+		//5 * cos(2 * 3.1415f * sample[1]), 5 * sin(2 * 3.1415f * sample[1]);
 		//float r3 = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
+		float random = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / XMAX)));
+		float z = 1 * cos(random);
+		float x = 1 * sin(random);
 		glm::vec4 aux;
-		aux.x = XMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / XMAX));
+		aux.x = sqrt(1 - (z * z));
 		aux.y = YMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / YMAX));
-		aux.z = ZMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / ZMAX));
+		aux.z = sqrt(1 - (x * x));
 		aux.w = 1.0f;
 		positions.push_back(aux);
 
