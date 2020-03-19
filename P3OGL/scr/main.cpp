@@ -70,6 +70,7 @@ float desplY = 0.0f;
 //Texturas  
 unsigned int colorTexId;  
 unsigned int emiTexId;
+unsigned int alphaTexId;
 
 struct program
 {
@@ -107,6 +108,7 @@ glm::vec3 lightIntensity(0.1f);
 //Texturas Uniform  
 int uColorTex;  
 int uEmiTex;
+int uAlphaTex;
 
 //Atributos VBO
 int inPos;
@@ -338,8 +340,7 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	uModelViewProjMat = glGetUniformLocation(program->program, "modelViewProj");
 	uProjectionMatrix = glGetUniformLocation(program->program, "proj");
 
-	uColorTex = glGetUniformLocation(program->program, "colorTex");
-	uEmiTex = glGetUniformLocation(program->program, "emiTex");
+	uAlphaTex = glGetUniformLocation(program->program, "alphaTex");
 
 	uLightPosition = glGetUniformLocation(program->program, "lightPosition");
 	uLightIntensity = glGetUniformLocation(program->program, "lightIntensity");
@@ -349,12 +350,8 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	inNormal = glGetAttribLocation(program->program, "inNormal");
 	inTexCoord = glGetAttribLocation(program->program, "inTexCoord");
 
-	if (uColorTex != -1) {
-		glUniform1i(uColorTex, 0);
-	}
-
-	if (uEmiTex != -1) {
-		glUniform1i(uEmiTex, 1);
+	if (uAlphaTex != -1) {
+		glUniform1i(uAlphaTex, 0);
 	}
 
 }
@@ -526,6 +523,8 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 		glVertexAttribPointer(inColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(inColor);
 	}
+
+	alphaTexId = loadTex("../img/color2.png");
 	
 }
 
@@ -625,6 +624,11 @@ void renderFunc()
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	glUseProgram(programs[0].program);
+
+	//Texturas  
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, alphaTexId);
+
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
 	glBindVertexArray(0);
