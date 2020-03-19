@@ -623,6 +623,10 @@ void renderFunc()
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
+	glBlendEquation(GL_FUNC_ADD);
+
 	glUseProgram(programs[0].program);
 
 	//Texturas  

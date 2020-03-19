@@ -1,5 +1,8 @@
 ﻿cl : línea de comandos warning D9035: La opción 'Gm' está desusada y se quitará en próximas versiones
   main.cpp
 E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(52,30): warning C4305: 'inicializando': truncamiento de 'double' a 'float'
-E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(274,17): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+E:\oscar\my_projects\PGATR_Practica1\P3OGL\scr\main.cpp(276,17): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+  LINK : no se encontró E:\oscar\my_projects\PGATR_Practica1\P3OGL\Debug\P3OGL.exe o no lo generó el último vínculo incremental; ejecutando vínculo completo
+auxiliar.obj : warning LNK4075: se omite '/EDITANDCONTINUE' debido a la especificación '/SAFESEH'
+auxiliar.obj : warning LNK4204: falta información de depuración de 'E:\oscar\my_projects\PGATR_Practica1\P3OGL\Debug\vc142.pdb' para hacer referencia al módulo; se vinculará el objeto sin tener en cuenta información de depuración
   P3OGL.vcxproj -> E:\oscar\my_projects\PGATR_Practica1\P3OGL\Debug\P3OGL.exe
