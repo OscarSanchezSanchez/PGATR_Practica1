@@ -29,8 +29,9 @@ void main()
 	vec3 p = Positions[gid].xyz;
 	vec3 v = Velocities[gid].xyz;
 
-	vec3 pp = p + v*dt + 0.5*dt*dt*g;
 	vec3 vp = v + g*dt;
+	vec3 pp = p + vp*dt + 0.5*dt*dt*g;
+	
 
 	Positions[gid].xyz = pp;
 	Velocities[gid].xyz = vp;

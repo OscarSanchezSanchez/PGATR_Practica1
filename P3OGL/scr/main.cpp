@@ -17,10 +17,10 @@
 #define NUM_PARTICLES 1204*1024
 #define WORK_GROUP_SIZE 128
 
-#define XMIN -1
-#define XMAX 2
-#define YMIN -1
-#define YMAX 2
+#define XMIN -5
+#define XMAX 10
+#define YMIN -5
+#define YMAX 10
 #define ZMIN 0
 #define ZMAX 2
 
@@ -46,12 +46,13 @@ float displacementLight = 5.0f;
 //Giro de c�mara por teclado
 float yaw_angle = 0.01f;
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
+float cameraDistanceZ = 3.0f;
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, cameraDistanceZ);
 glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 float angulo = -3.1415 * 0.5f;
 
-int widthVentana = 1200;
+int widthVentana = 500;
 int heightVentana = 500;
 float radio = 6;
 glm::vec2 antPos;
@@ -232,16 +233,20 @@ void initContext(int argc, char** argv){
 void initOGL(){
 
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	glFrontFace(GL_CCW);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_CULL_FACE);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
+	glBlendEquation(GL_FUNC_ADD);
+
 
 	proj = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 50.0f);
 	view = glm::mat4(1.0f);
-	view[3].z = -5.0f;
+	view[3].z = -cameraDistanceZ;
 
 }
 
@@ -259,6 +264,10 @@ void destroy()
 	glDeleteShader(programs[0].gshader);
 	glDeleteProgram(programs[0].program);
 
+	glDeleteShader(computePrograms[0].shader);
+	glDeleteProgram(computePrograms[0].program);
+
+
 	if (inPos != -1) glDeleteBuffers(1, &posVBO);
 	if (inColor != -1) glDeleteBuffers(1, &colorVBO);
 	if (inNormal != -1) glDeleteBuffers(1, &normalVBO);
@@ -268,14 +277,12 @@ void destroy()
 
 	glDeleteTextures(1, &colorTexId);  
 	glDeleteTextures(1, &emiTexId);
-
+	glDeleteTextures(1, &alphaTexId);
 }
 
 void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::vec4>& velocities, std::vector<glm::vec4>& colors)
 {
 	float auxFloat = widthVentana / 2;
-	float HI = 500;
-	float LO = -500;
 	for (size_t i = 0; i < NUM_PARTICLES; i++)
 	{
 
@@ -524,7 +531,7 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 		glEnableVertexAttribArray(inColor);
 	}
 
-	alphaTexId = loadTex("../img/color2.png");
+	alphaTexId = loadTex("../img/estrella1.png");
 	
 }
 
@@ -622,10 +629,6 @@ void renderFunc()
 	glUseProgram(computePrograms[0].program);
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
-	glBlendEquation(GL_FUNC_ADD);
 
 	glUseProgram(programs[0].program);
 
