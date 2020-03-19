@@ -19,7 +19,7 @@
 
 #define XMIN -1
 #define XMAX 2
-#define YMIN 0
+#define YMIN -1
 #define YMAX 2
 #define ZMIN 0
 #define ZMAX 2
