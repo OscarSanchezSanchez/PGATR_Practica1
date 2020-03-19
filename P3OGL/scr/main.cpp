@@ -304,14 +304,14 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 {
 	program->vshader = loadShader(vname, GL_VERTEX_SHADER);
 	program->fshader = loadShader(fname, GL_FRAGMENT_SHADER);
-	//program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
+	program->gshader = loadShader(gname, GL_GEOMETRY_SHADER);
 	//program->tcshader = loadShader(tcname, GL_TESS_CONTROL_SHADER);
 	//program->teshader = loadShader(tename, GL_TESS_EVALUATION_SHADER);
 
 	program->program = glCreateProgram();
 	glAttachShader(program->program, program->vshader);
 	glAttachShader(program->program, program->fshader);
-	//glAttachShader(program->program, program->gshader);
+	glAttachShader(program->program, program->gshader);
 	//glAttachShader(program->program, program->tcshader);
 	//glAttachShader(program->program, program->teshader);
 	glLinkProgram(program->program);
@@ -336,6 +336,7 @@ void initShader(const char* vname, const char* fname, const char* gname, const c
 	uNormalMat = glGetUniformLocation(program->program, "normal");
 	uModelViewMat = glGetUniformLocation(program->program, "modelView");
 	uModelViewProjMat = glGetUniformLocation(program->program, "modelViewProj");
+	uProjectionMatrix = glGetUniformLocation(program->program, "proj");
 
 	uColorTex = glGetUniformLocation(program->program, "colorTex");
 	uEmiTex = glGetUniformLocation(program->program, "emiTex");
@@ -658,7 +659,7 @@ void resizeFunc(int width, int height)
 
 void idleFunc()
 {
-	model = glm::mat4(1.0f);
+	//model = glm::mat4(1.0f);
 	static float angle = 0.0f;
 	angle = (angle > 3.141592f * 2.0f) ? 0 : angle + 0.01f;
 	//models[0] = glm::rotate(models[0], angle, glm::vec3(1.0f, 1.0f, 0.0f));

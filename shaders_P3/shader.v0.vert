@@ -10,5 +10,5 @@ uniform mat4 modelViewProj;
 void main()
 {
 	//vNormal = inNormal;
-	gl_Position = modelViewProj * vec4(inPos, 1.0);
+	gl_Position = vec4(inPos, 1.0);
 }
