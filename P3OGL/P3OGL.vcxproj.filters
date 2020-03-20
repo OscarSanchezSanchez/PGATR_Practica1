@@ -64,7 +64,13 @@
     <None Include="..\shaders_P3\shader.v2.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="..\shaders_P3\shader.v0.comp">
+    <None Include="..\shaders_P3\shader.RK.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.bitonicSort.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.verlet.comp">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

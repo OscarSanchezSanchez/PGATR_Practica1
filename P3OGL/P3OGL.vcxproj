@@ -22,7 +22,8 @@
     <ClCompile Include="scr\Model\Model.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shaders_P3\shader.v0.comp" />
+    <None Include="..\shaders_P3\shader.bitonicSort.comp" />
+    <None Include="..\shaders_P3\shader.RK.comp" />
     <None Include="..\shaders_P3\shader.v0.frag" />
     <None Include="..\shaders_P3\shader.v0.geo" />
     <None Include="..\shaders_P3\shader.v0.vert" />
@@ -32,6 +33,7 @@
     <None Include="..\shaders_P3\shader.v2.frag" />
     <None Include="..\shaders_P3\Shader.v2.geo" />
     <None Include="..\shaders_P3\shader.v2.vert" />
+    <None Include="..\shaders_P3\shader.verlet.comp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>P3OGL</ProjectName>
