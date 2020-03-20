@@ -33,4 +33,4 @@
 *.vs
 
 # Debug
-*\Debug\
+P3OGL/Debug/
