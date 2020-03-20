@@ -25,7 +25,7 @@
 #define ZMAX 2
 
 #define VXMIN 0
-#define VXMAX 0.01f
+#define VXMAX 10
 #define VYMIN 0
 #define VYMAX 1
 #define VZMIN 0
@@ -286,6 +286,7 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 	for (size_t i = 0; i < NUM_PARTICLES; i += 4)
 	{
 		float random = XMAX * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		glm::vec3 omega(0.0f, VXMAX * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))), 0.0f);
 		float r = 1.0f;
 		float z = r * cos(random);
 		float x = r * sin(random);
@@ -301,6 +302,19 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 		positions.push_back(aux2);
 		glm::vec4 aux3 = glm::vec4(-aux.x, aux.y, -aux.z, aux.w);
 		positions.push_back(aux3);
+
+		glm::vec3 radio(aux.x, aux.y, aux.z);
+		glm::vec3 radio1(aux1.x, aux1.y, aux1.z);
+		glm::vec3 radio2(aux2.x, aux2.y, aux2.z);
+		glm::vec3 radio3(aux3.x, aux3.y, aux3.z);
+		glm::vec4 auxVel(glm::cross(omega, radio), 1.0);
+		glm::vec4 auxVel1(glm::cross(omega, radio1), 1.0);
+		glm::vec4 auxVel2(glm::cross(omega, radio2), 1.0);
+		glm::vec4 auxVel3(glm::cross(omega, radio3), 1.0);
+		velocities.push_back(auxVel);
+		velocities.push_back(auxVel1);
+		velocities.push_back(auxVel2);
+		velocities.push_back(auxVel3);
 	}
 
 	for (size_t i = 0; i < NUM_PARTICLES; i++)
@@ -309,12 +323,6 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 		//float r3 = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 
 		glm::vec4 aux;
-
-		aux.x = VZMAX != 0.0f ? VXMIN + VXMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
-		aux.y = VYMAX != 0.0f ? VYMIN + VYMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
-		aux.z = VZMAX != 0.0f ? VZMIN + VZMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
-		aux.w = 1.0f;
-		velocities.push_back(aux);
 
 		aux.x = (((float)rand() * 2) - 1) / auxFloat;
 		aux.y = (((float)rand() * 2) - 1) / auxFloat;
