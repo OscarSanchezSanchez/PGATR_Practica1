@@ -21,6 +21,8 @@ layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
 const vec3 g = vec3(0., 0., 0.);
 const float dt = 0.001;
+float G = 6.674 * pow(10, -11);
+float M1 = 100000000000.0;
 
 uint gid = gl_GlobalInvocationID.x;
 
@@ -29,8 +31,11 @@ void main()
 	vec3 p = Positions[gid].xyz;
 	vec3 v = Velocities[gid].xyz;
 
-	vec3 vp = v + g*dt;
-	vec3 pp = p  + 0.5*dt*dt*g;
+	float d = distance(p, vec3(0.0f));
+	vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * p;
+
+	vec3 vp = v + acelGrav*dt;
+	vec3 pp = p + vp * dt + 0.5*dt*dt*acelGrav;
 	
 
 	Positions[gid].xyz = pp;
