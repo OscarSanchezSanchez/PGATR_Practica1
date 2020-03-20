@@ -18,7 +18,7 @@
 #define WORK_GROUP_SIZE 128
 
 #define XMIN -1
-#define XMAX 2 * 3.1415
+#define XMAX 0.5 * 3.1415
 #define YMIN 0
 #define YMAX 0.2
 #define ZMIN 0
@@ -283,23 +283,36 @@ void destroy()
 void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::vec4>& velocities, std::vector<glm::vec4>& colors)
 {
 	float auxFloat = widthVentana / 2;
+	for (size_t i = 0; i < NUM_PARTICLES; i += 4)
+	{
+		float random = XMAX * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		float r = 1.0f;
+		float z = r * cos(random);
+		float x = r * sin(random);
+		glm::vec4 aux;
+		aux.x = sqrt(r * r - (z * z));
+		aux.y = YMIN + YMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+		aux.z = sqrt(r * r - (x * x));
+		aux.w = 1.0f;
+		positions.push_back(aux);
+		glm::vec4 aux1 = glm::vec4(-aux.x, aux.y, aux.z, aux.w);
+		positions.push_back(aux1);
+		glm::vec4 aux2 = glm::vec4(aux.x, aux.y, -aux.z, aux.w);
+		positions.push_back(aux2);
+		glm::vec4 aux3 = glm::vec4(-aux.x, aux.y, -aux.z, aux.w);
+		positions.push_back(aux3);
+	}
+
 	for (size_t i = 0; i < NUM_PARTICLES; i++)
 	{
 		//5 * cos(2 * 3.1415f * sample[1]), 5 * sin(2 * 3.1415f * sample[1]);
 		//float r3 = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
-		float random = (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / XMAX)));
-		float z = 1 * cos(random);
-		float x = 1 * sin(random);
-		glm::vec4 aux;
-		aux.x = sqrt(1 - (z * z));
-		aux.y = YMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / YMAX));
-		aux.z = sqrt(1 - (x * x));
-		aux.w = 1.0f;
-		positions.push_back(aux);
 
-		aux.x = VZMAX != 0.0f ? VXMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VXMAX)) : 0.0f;
-		aux.y = VYMAX != 0.0f ? VYMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VYMAX)) : 0.0f;
-		aux.z = VZMAX != 0.0f ? VZMIN + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / VZMAX)) : 0.0f;
+		glm::vec4 aux;
+
+		aux.x = VZMAX != 0.0f ? VXMIN + VXMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
+		aux.y = VYMAX != 0.0f ? VYMIN + VYMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
+		aux.z = VZMAX != 0.0f ? VZMIN + VZMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) : 0.0f;
 		aux.w = 1.0f;
 		velocities.push_back(aux);
 
