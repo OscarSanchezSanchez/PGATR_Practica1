@@ -1,6 +1,9 @@
 #pragma once
-#define NUM_PARTICLES 512*512//1204*1024
+#define NUM_PARTICLES 512//1204*1024
 #define WORK_GROUP_SIZE 128
+
+#define PARTICLE_LIFETIME 1000
+#define LIFETIME_MAX 1000
 
 #define XMIN -1
 #define XMAX 0.5 * 3.1415
@@ -15,3 +18,5 @@
 #define VYMAX 1
 #define VZMIN 0
 #define VZMAX 1
+
+#define BITONIC true

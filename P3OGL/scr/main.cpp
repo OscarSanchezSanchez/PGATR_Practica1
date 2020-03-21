@@ -119,6 +119,9 @@ unsigned int posSSBO;
 unsigned int velSSBO;
 unsigned int oldPosSSBO;
 unsigned int colorSSBO;
+unsigned int spawnSSBO;
+unsigned int spawnVelSSBO;
+unsigned int spawnOldSSBO;
 
 
 //SSBO
@@ -126,6 +129,9 @@ std::vector<glm::vec4> positionsParticles;
 std::vector<glm::vec4> velocitiesParticles;
 std::vector<glm::vec4> oldpositionsParticles;
 std::vector<glm::vec4> colorParticles;
+std::vector<glm::vec4> spawn;
+std::vector<glm::vec4> spawnVel;
+std::vector<glm::vec4> spawnOld;
 
 
 //////////////////////////////////////////////////////////////
@@ -439,10 +445,14 @@ void firstStepVerlet()
 		glm::vec3 pp = pos + vel * dt + (0.5f * dt * dt * acelGrav);
 		glm::vec3 vp = (pp - pos) * (1.0f / dt);
 		
-		oldpositionsParticles[i] = glm::vec4(pos,1.0f);
-		positionsParticles[i] = glm::vec4(pp, 1.0f);
+		float w = PARTICLE_LIFETIME + (LIFETIME_MAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		oldpositionsParticles[i] = glm::vec4(pos, w);
+		positionsParticles[i] = glm::vec4(pp, w);
 		velocitiesParticles[i] = glm::vec4(vp, 1.0f);
 	}
+	spawn = positionsParticles;
+	spawnVel = velocitiesParticles;
+	spawnOld = oldpositionsParticles;
 }
 
 void initObj(){
@@ -565,6 +575,21 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, colorSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &colorParticles[0], GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, colorSSBO);
+
+	glGenBuffers(1, &spawnSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, spawnSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &positionsParticles[0], GL_STATIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, spawnSSBO);
+
+	glGenBuffers(1, &spawnOldSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, spawnOldSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &oldpositionsParticles[0], GL_STATIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, spawnOldSSBO);
+
+	glGenBuffers(1, &spawnVelSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, spawnVelSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &velocitiesParticles[0], GL_STATIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, spawnVelSSBO);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -709,18 +734,21 @@ void renderFunc()
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	//compute sorting compute shader
-	GLuint stage = std::log2(NUM_PARTICLES);
-	GLuint subStage = 0;
-	glUseProgram(computePrograms[1].program);
-	for (size_t i = 0; i < stage; i++)
+	if (BITONIC)
 	{
-		glUniform1ui(uStage, i);
-		for (size_t j = 0; j < i + 1; j++)
+		//compute sorting compute shader
+		GLuint stage = std::log2(NUM_PARTICLES);
+		GLuint subStage = 0;
+		glUseProgram(computePrograms[1].program);
+		for (size_t i = 0; i < stage; i++)
 		{
-			glUniform1ui(uSubStage, j);
-			glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
-			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			glUniform1ui(uStage, i);
+			for (size_t j = 0; j < i + 1; j++)
+			{
+				glUniform1ui(uSubStage, j);
+				glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
+				glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+			}
 		}
 	}
 

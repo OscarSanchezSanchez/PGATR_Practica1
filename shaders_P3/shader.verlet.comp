@@ -17,27 +17,57 @@ layout (std140, binding=6) buffer Old
 	vec4 oldPositions[ ];
 };
 
+layout (std140, binding=8) buffer spawnPos
+{
+	vec4 spawnPositions[ ];
+};
+
+layout (std140, binding=9) buffer spawnOldpos
+{
+	vec4 spawnOldpositions[ ];
+};
+
+layout (std140, binding=10) buffer spawnVel
+{
+	vec4 spawnVels[ ];
+};
+
 layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
-const float dt = 0.001;
+const float dt = 0.001; 
 float G = 6.674 * pow(10, -11);
 float M1 = 1000000000000.0;
 
 uint gid = gl_GlobalInvocationID.x;
 
+const float deathTime = 1;
+
 void main()
 {
 	vec3 p = Positions[gid].xyz;
-	vec3 v = Velocities[gid].xyz;
-	vec3 oldPos = oldPositions[gid].xyz;
+	float lifetime = Positions[gid].w;
 
-	float d = distance(p, vec3(0.0f));
-	vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * p;
+	if (lifetime < 0)
+	{
+		Positions[gid] = spawnPositions[gid];
+		Velocities[gid] = spawnVels[gid];
+		oldPositions[gid] = spawnOldpositions[gid];
+	}
+	else
+	{
+		vec3 v = Velocities[gid].xyz;
+		vec3 oldPos = oldPositions[gid].xyz;
 
-	vec3 pp = 2*p - oldPos + dt*dt * acelGrav;
-	vec3 vp = (pp - p) * (1.0 / dt);
+		float d = distance(p, vec3(0.0f));
+		vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * p;
 
-	oldPositions[gid].xyz = p;
-	Positions[gid].xyz = pp;
-	Velocities[gid].xyz = vp;
+		vec3 pp = 2*p - oldPos + dt*dt * acelGrav;
+		vec3 vp = (pp - p) * (1.0 / dt);
+
+		lifetime -= deathTime;
+
+		oldPositions[gid] = vec4(p, lifetime);
+		Positions[gid] = vec4(pp, lifetime);
+		Velocities[gid].xyz = vp;
+	}
 }
