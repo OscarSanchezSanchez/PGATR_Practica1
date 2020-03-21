@@ -24,6 +24,9 @@
     <ClInclude Include="scr\Model\OBJ_loader.h">
       <Filter>src\Model</Filter>
     </ClInclude>
+    <ClInclude Include="scr\Constants.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\main.cpp">

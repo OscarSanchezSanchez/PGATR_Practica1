@@ -13,23 +13,8 @@
 #include <iostream>
 #include <vector>
 #include "Model/Model.h"
+#include "Constants.h"
 
-#define NUM_PARTICLES 1204*1024
-#define WORK_GROUP_SIZE 128
-
-#define XMIN -1
-#define XMAX 0.5 * 3.1415
-#define YMIN 0
-#define YMAX 0.2
-#define ZMIN 0
-#define ZMAX 2
-
-#define VXMIN 0
-#define VXMAX 10
-#define VYMIN 0
-#define VYMAX 1
-#define VZMIN 0
-#define VZMAX 1
 
 //////////////////////////////////////////////////////////////
 // Datos que se almacenan en la memoria de la CPU
@@ -98,8 +83,6 @@ int uModelViewMat;
 int uModelViewProjMat;
 int uNormalMat;
 int uProjectionMatrix;
-int uFirst;
-int uNoFirst;
 
 
 //Variables uniformes posición e intesidad de la luz
@@ -133,12 +116,14 @@ unsigned int triangleIndexVBO;
 unsigned int posSSBO;
 unsigned int velSSBO;
 unsigned int oldPosSSBO;
+unsigned int colorSSBO;
 
 
 //SSBO
-std::vector<glm::vec4> positions;
-std::vector<glm::vec4> velocities;
-std::vector<glm::vec4> oldPositions;
+std::vector<glm::vec4> positionsParticles;
+std::vector<glm::vec4> velocitiesParticles;
+std::vector<glm::vec4> oldpositionsParticles;
+std::vector<glm::vec4> colorParticles;
 
 
 //////////////////////////////////////////////////////////////
@@ -163,7 +148,7 @@ void initObj(Model model);
 void initSSBOrender(const char* computeName, struct computeProgram* computeProgram);
 void initSortCompute(const char* computeName, struct computeProgram* computeProgram);
 void destroy();
-void generateRandomPoints(std::vector<glm::vec4> &positions, std::vector<glm::vec4> &velocities, std::vector<glm::vec4> &colors);
+void generateRandomPoints(std::vector<glm::vec4> &positionsParticles, std::vector<glm::vec4> &velocitiesParticles, std::vector<glm::vec4> &oldPositions, std::vector<glm::vec4>& colors);
 
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
 	struct program* program);
@@ -188,7 +173,7 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 
-	generateRandomPoints(positions,velocities,oldPositions);
+	generateRandomPoints(positionsParticles,velocitiesParticles,oldpositionsParticles,colorParticles);
 	firstStepVerlet();
 
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
@@ -286,11 +271,12 @@ void destroy()
 	glDeleteTextures(1, &alphaTexId);
 }
 
-void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::vec4>& velocities, std::vector<glm::vec4>& oldPositions)
+void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vector<glm::vec4>& velocitiesParticles, std::vector<glm::vec4>& oldpositionsParticles, std::vector<glm::vec4>& colorParticles)
 {
-	positions.resize(NUM_PARTICLES);
-	velocities.resize(NUM_PARTICLES);
-	oldPositions.resize(NUM_PARTICLES);
+	positionsParticles.resize(NUM_PARTICLES);
+	velocitiesParticles.resize(NUM_PARTICLES);
+	oldpositionsParticles.resize(NUM_PARTICLES);
+	colorParticles.resize(NUM_PARTICLES);
 
 	for (size_t i = 0; i < NUM_PARTICLES; i += 4)
 	{
@@ -305,13 +291,13 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 		aux.z = sqrt(r * r - (x * x));
 		aux.w = 1.0f;
 
-		positions[i] = aux;
+		positionsParticles[i] = aux;
 		glm::vec4 aux1 = glm::vec4(-aux.x, aux.y, aux.z, aux.w);
-		positions[i+1] = aux1;
+		positionsParticles[i+1] = aux1;
 		glm::vec4 aux2 = glm::vec4(aux.x, aux.y, -aux.z, aux.w);
-		positions[i+2] = aux2;
+		positionsParticles[i+2] = aux2;
 		glm::vec4 aux3 = glm::vec4(-aux.x, aux.y, -aux.z, aux.w);
-		positions[i+3] = (aux3);
+		positionsParticles[i+3] = (aux3);
 
 		glm::vec3 radio(aux.x, aux.y, aux.z);
 		glm::vec3 radio1(aux1.x, aux1.y, aux1.z);
@@ -321,15 +307,24 @@ void generateRandomPoints(std::vector<glm::vec4>& positions, std::vector<glm::ve
 		glm::vec4 auxVel1(glm::cross(omega, radio1), 1.0);
 		glm::vec4 auxVel2(glm::cross(omega, radio2), 1.0);
 		glm::vec4 auxVel3(glm::cross(omega, radio3), 1.0);
-		velocities[i] = auxVel;
-		velocities[i+1] = auxVel1;
-		velocities[i+2] = auxVel2;
-		velocities[i+3] = auxVel3;
+		velocitiesParticles[i] = auxVel;
+		velocitiesParticles[i+1] = auxVel1;
+		velocitiesParticles[i+2] = auxVel2;
+		velocitiesParticles[i+3] = auxVel3;
 
-		oldPositions[i] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
-		oldPositions[i+1] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
-		oldPositions[i+2] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
-		oldPositions[i+3] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+		oldpositionsParticles[i] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+		oldpositionsParticles[i+1] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+		oldpositionsParticles[i+2] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+		oldpositionsParticles[i+3] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+
+		float randomC1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomC2= static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomC3= static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomAlpha= static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		colorParticles[i] = glm::vec4(randomC1, randomC2, randomC3, randomAlpha);
+		colorParticles[i+1] = glm::vec4(randomC1, randomC3, randomC2, randomAlpha);
+		colorParticles[i+2] = glm::vec4(randomC3, randomC2, randomC1, randomAlpha);
+		colorParticles[i+3] = glm::vec4(randomC3, randomC1, randomC2, randomAlpha);
 	}
 
 
@@ -431,8 +426,8 @@ void firstStepVerlet()
 	float M1 = 100000000000.0;
 	for (int i = 0; i < NUM_PARTICLES; i++)
 	{
-		glm::vec3 pos(positions[i]);
-		glm::vec3 vel(velocities[i]);
+		glm::vec3 pos(positionsParticles[i]);
+		glm::vec3 vel(velocitiesParticles[i]);
 
 		float d = glm::distance( pos, glm::vec3(0.0f) );
 		glm::vec3 acelGrav = -G * M1 * (1.0f / (d * d * d)) * pos;
@@ -440,9 +435,9 @@ void firstStepVerlet()
 		glm::vec3 pp = pos + vel * dt + (0.5f * dt * dt * acelGrav);
 		glm::vec3 vp = (pp - pos) * (1.0f / dt);
 		
-		oldPositions[i] = glm::vec4(pos,1.0f);
-		positions[i] = glm::vec4(pp, 1.0f);
-		velocities[i] = glm::vec4(vp, 1.0f);
+		oldpositionsParticles[i] = glm::vec4(pos,1.0f);
+		positionsParticles[i] = glm::vec4(pp, 1.0f);
+		velocitiesParticles[i] = glm::vec4(vp, 1.0f);
 	}
 }
 
@@ -548,19 +543,24 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 	
 	glGenBuffers(1, &posSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, posSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &positions[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &positionsParticles[0], GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, posSSBO);
 
 
 	glGenBuffers(1, &velSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, velSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &velocities[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &velocitiesParticles[0], GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, velSSBO);
 	
 	glGenBuffers(1, &oldPosSSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldPosSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &oldPositions[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &oldpositionsParticles[0], GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, oldPosSSBO);
+
+	glGenBuffers(1, &colorSSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, colorSSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, NUM_PARTICLES * sizeof(glm::vec4), &colorParticles[0], GL_STATIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, colorSSBO);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -570,6 +570,13 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 		glBindBuffer(GL_ARRAY_BUFFER, posSSBO);
 		glVertexAttribPointer(inPos, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(inPos);
+	}
+
+	if (inPos != -1)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, colorSSBO);
+		glVertexAttribPointer(inColor, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(inColor);
 	}
 
 	alphaTexId = loadTex("../img/estrella1.png");

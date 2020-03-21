@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="scr\auxiliar.h" />
     <ClInclude Include="scr\BOX.h" />
+    <ClInclude Include="scr\Constants.h" />
     <ClInclude Include="scr\Model\Model.h" />
     <ClInclude Include="scr\Model\OBJ_loader.h" />
   </ItemGroup>
