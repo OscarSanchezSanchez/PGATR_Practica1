@@ -33,8 +33,9 @@
 *.vs
 
 # Debug
-*/Debug/
-*/debug/
+P3OGL\Debug
+#*/Debug/
+#*/debug/
 
-*\Debug\
-*\debug\
+#*\Debug\
+#*\debug\
