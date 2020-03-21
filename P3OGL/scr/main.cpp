@@ -182,12 +182,12 @@ int main(int argc, char** argv)
 	initOGL();
 
 	generateRandomPoints(positionsParticles,velocitiesParticles,oldpositionsParticles,colorParticles);
-	firstStepVerlet();
+	//firstStepVerlet();
 
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
 
-	initSSBOrender("../shaders_P3/shader.verlet.comp", &computePrograms[0]);
+	initSSBOrender("../shaders_P3/shader.RK.comp", &computePrograms[0]);
 	initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
 
 	//initObj(myModel);
@@ -302,8 +302,7 @@ void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vecto
 		aux.x = sqrt(r * r - (z * z));
 		aux.y = YMIN + YMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 		aux.z = sqrt(r * r - (x * x));
-		aux.w = 1.0f;
-
+		aux.w = PARTICLE_LIFETIME + (LIFETIME_MAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
 		positionsParticles[i] = aux;
 		glm::vec4 aux1 = glm::vec4(-aux.x, aux.y, aux.z, aux.w);
 		positionsParticles[i+1] = aux1;
@@ -339,6 +338,9 @@ void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vecto
 		colorParticles[i+2] = glm::vec4(randomC3, randomC2, randomC1, randomAlpha);
 		colorParticles[i+3] = glm::vec4(randomC3, randomC1, randomC2, randomAlpha);
 	}
+	spawn = positionsParticles;
+	spawnVel = velocitiesParticles;
+	spawnOld = oldpositionsParticles;
 }
 
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename, struct program* program) 
@@ -608,7 +610,7 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 		glEnableVertexAttribArray(inColor);
 	}
 
-	alphaTexId = loadTex("../img/estrella1.png");
+	alphaTexId = loadTex("../img/2.png");
 	
 }
 
