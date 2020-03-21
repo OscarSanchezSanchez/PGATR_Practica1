@@ -34,8 +34,8 @@
 
 # Debug
 P3OGL\Debug
-#*/Debug/
+*Debug/
 #*/debug/
 
-#*\Debug\
+*Debug\
 #*\debug\
