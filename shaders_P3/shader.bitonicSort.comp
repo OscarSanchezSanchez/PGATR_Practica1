@@ -17,59 +17,119 @@ layout (std140, binding=6) buffer Old
 	vec4 oldPositions[ ];
 };
 
+layout (std140, binding=7) buffer Col
+{
+	vec4 Colors[ ];
+};
+
 layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
-void bitonicSort(const uint stage, const uint subStage, const uint direction) 
+bool sortDecreasing = true;
+uint gid = gl_GlobalInvocationID.x;
+uniform uint stage;
+uniform uint subStage;
+
+
+void bitonicSort() 
 {
-    uint sortIncreasing = direction;
     uint threadId = gl_GlobalInvocationID.x;
-    // Determine where to conduct the bitonic split
-    // by locating the middle-point of this 1D array
-    uint distanceBetweenPairs = 1 << (stage - subStage);
+    
+    uint distanceBetweenPairs = uint(pow(2, stage - subStage));
     uint blockWidth = 2 * distanceBetweenPairs;
-    // Determine the left and right indexes to data referencing
+    
     uint leftId = (threadId % distanceBetweenPairs) + (threadId / distanceBetweenPairs) * blockWidth;
     uint rightId = leftId + distanceBetweenPairs;
-    float leftElement = Positions[leftId].z;
-    float rightElement = Positions[rightId].z;
-    // Threads are divided into blocks of size
-    // 2^sameDirectionBlockWidth
-    // and its used to build bitonic subsequences s.t the sorting is
-    // monotically increasing on the left and decreasing on the right
-    uint sameDirectionBlockWidth = 1 << stage;
 
-    if((threadId/sameDirectionBlockWidth) % 2 == 1)
+    vec4 leftElementPos = Positions[leftId];
+    vec4 rightElementPos = Positions[rightId];
+
+    vec4 leftElementVel = Velocities[leftId];
+    vec4 rightElementVel = Velocities[rightId];
+
+    vec4 leftElementOldpos = oldPositions[leftId];
+    vec4 rightElementOldpos = oldPositions[rightId];
+
+    vec4 leftElementColor = Colors[leftId];
+    vec4 rightElementColor = Colors[rightId];
+    
+    uint sameDirectionBlockWidth = uint(pow(2, stage));
+
+    if((gid/sameDirectionBlockWidth) % 2 == 1)
     {
-        sortIncreasing = 1 - sortIncreasing;
+        sortDecreasing = !sortDecreasing;
     }
-    float greater;
-    float lesser;
-    // perform pairwise comparison between two elements and depending
-    // whether its to build the bitonic that is monotically increasing
-    // and decreasing.
-    if(leftElement > rightElement) 
+
+    //aux vectors
+    vec4 greaterPos;
+    vec4 lesserPos;
+    vec4 greaterVel;
+    vec4 lesserVel;
+    vec4 greaterOldpos;
+    vec4 lesserOldpos;
+    vec4 greaterColor;
+    vec4 lesserColor;
+
+    if(leftElementPos.z > rightElementPos.z) 
     {
-        greater = leftElement;
-        lesser = rightElement;
+        greaterPos = leftElementPos;
+        lesserPos = rightElementPos;
+
+        greaterVel = leftElementVel;
+        lesserVel = rightElementVel;
+
+        greaterOldpos = leftElementOldpos;
+        lesserOldpos = rightElementOldpos;
+
+        greaterColor = leftElementColor;
+        lesserColor = rightElementColor;
     } 
     else 
     {
-        greater = rightElement;
-        lesser = leftElement;
+        greaterPos = rightElementPos;
+        lesserPos = leftElementPos;
+
+        greaterVel = rightElementVel;
+        lesserVel = leftElementVel;
+
+        greaterOldpos = rightElementOldpos;
+        lesserOldpos = leftElementOldpos;
+
+        greaterColor = rightElementColor;
+        lesserColor = leftElementColor;
     }
-    if(sortIncreasing == 1) 
+    if(!sortDecreasing) 
     {
-        Positions[leftId] = lesser;
-        input[rightId] = greater;
+        Positions[leftId] = lesserPos;
+        Positions[rightId] = greaterPos;
+
+        Velocities[leftId] = lesserVel;
+        Velocities[rightId] = greaterVel;
+
+        oldPositions[leftId] = lesserOldpos;
+        oldPositions[rightId] = greaterOldpos;
+
+        Colors[leftId] = lesserColor;
+        Colors[rightId] = greaterColor;
     } 
     else 
     {
-        input[leftId] = greater;
-        input[rightId] = lesser;
+        Positions[leftId] = greaterPos;
+        Positions[rightId] = lesserPos;
+
+        Velocities[leftId] = greaterVel;
+        Velocities[rightId] = lesserVel;
+
+        oldPositions[leftId] = greaterOldpos;
+        oldPositions[rightId] = lesserOldpos;
+
+        Colors[leftId] = greaterColor;
+        Colors[rightId] = lesserColor;
     }
 }
 
+
 void main()
 {
-
+    //Colors[gid].xyz = vec3(0.0, 0.5, 0.0);
+    bitonicSort();
 }

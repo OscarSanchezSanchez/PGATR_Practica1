@@ -1,5 +1,5 @@
 #pragma once
-#define NUM_PARTICLES 1204*1024
+#define NUM_PARTICLES 512*512//1204*1024
 #define WORK_GROUP_SIZE 128
 
 #define XMIN -1

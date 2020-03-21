@@ -83,6 +83,8 @@ int uModelViewMat;
 int uModelViewProjMat;
 int uNormalMat;
 int uProjectionMatrix;
+int uStage;
+int uSubStage;
 
 
 //Variables uniformes posición e intesidad de la luz
@@ -180,6 +182,7 @@ int main(int argc, char** argv)
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
 
 	initSSBOrender("../shaders_P3/shader.verlet.comp", &computePrograms[0]);
+	initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
 
 	//initObj(myModel);
 
@@ -231,7 +234,9 @@ void initOGL(){
 	glEnable(GL_CULL_FACE);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_CONSTANT_ALPHA);
+	//glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_CONSTANT_ALPHA);
+	//glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
+	glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 	glBlendEquation(GL_FUNC_ADD);
 
 
@@ -257,6 +262,8 @@ void destroy()
 
 	glDeleteShader(computePrograms[0].shader);
 	glDeleteProgram(computePrograms[0].program);
+	glDeleteShader(computePrograms[1].shader);
+	glDeleteProgram(computePrograms[1].program);
 
 
 	if (inPos != -1) glDeleteBuffers(1, &posVBO);
@@ -326,9 +333,6 @@ void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vecto
 		colorParticles[i+2] = glm::vec4(randomC3, randomC2, randomC1, randomAlpha);
 		colorParticles[i+3] = glm::vec4(randomC3, randomC1, randomC2, randomAlpha);
 	}
-
-
-
 }
 
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename, struct program* program) 
@@ -606,6 +610,8 @@ void initSortCompute(const char* computeName, struct computeProgram* computeProg
 		computeProgram->program = 0;
 		exit(-1);
 	}
+	uStage = glGetUniformLocation(computeProgram->program, "stage");
+	uSubStage = glGetUniformLocation(computeProgram->program, "subStage");
 }
 
 GLuint loadShader(const char *fileName, GLenum type){ 
@@ -698,13 +704,28 @@ void renderFunc()
 	}
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	//compute integrator shader
 	glUseProgram(computePrograms[0].program);
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-	glUseProgram(programs[0].program);
+	//compute sorting compute shader
+	GLuint stage = std::log2(NUM_PARTICLES);
+	GLuint subStage = 0;
+	glUseProgram(computePrograms[1].program);
+	for (size_t i = 0; i < stage; i++)
+	{
+		glUniform1ui(uStage, i);
+		for (size_t j = 0; j < i + 1; j++)
+		{
+			glUniform1ui(uSubStage, j);
+			glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
+	}
 
+	//drawing shader
+	glUseProgram(programs[0].program);
 	//Texturas  
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, alphaTexId);
