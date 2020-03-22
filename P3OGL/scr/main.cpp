@@ -156,7 +156,8 @@ void initObj(Model model);
 void initSSBOrender(const char* computeName, struct computeProgram* computeProgram);
 void initSortCompute(const char* computeName, struct computeProgram* computeProgram);
 void destroy();
-void generateRandomPoints(std::vector<glm::vec4> &positionsParticles, std::vector<glm::vec4> &velocitiesParticles, std::vector<glm::vec4> &oldPositions, std::vector<glm::vec4>& colors);
+void generateRandomPoints();
+void generateRandomPoints2();
 
 void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
 	struct program* program);
@@ -181,13 +182,13 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 
-	generateRandomPoints(positionsParticles,velocitiesParticles,oldpositionsParticles,colorParticles);
-	//firstStepVerlet();
+	generateRandomPoints2();
+	firstStepVerlet();
 
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
 
-	initSSBOrender("../shaders_P3/shader.RK.comp", &computePrograms[0]);
+	initSSBOrender("../shaders_P3/shader.verlet2.comp", &computePrograms[0]);
 	initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
 
 	//initObj(myModel);
@@ -284,7 +285,7 @@ void destroy()
 	glDeleteTextures(1, &alphaTexId);
 }
 
-void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vector<glm::vec4>& velocitiesParticles, std::vector<glm::vec4>& oldpositionsParticles, std::vector<glm::vec4>& colorParticles)
+void generateRandomPoints()
 {
 	positionsParticles.resize(NUM_PARTICLES);
 	velocitiesParticles.resize(NUM_PARTICLES);
@@ -337,6 +338,44 @@ void generateRandomPoints(std::vector<glm::vec4>& positionsParticles, std::vecto
 		colorParticles[i+1] = glm::vec4(randomC1, randomC3, randomC2, randomAlpha);
 		colorParticles[i+2] = glm::vec4(randomC3, randomC2, randomC1, randomAlpha);
 		colorParticles[i+3] = glm::vec4(randomC3, randomC1, randomC2, randomAlpha);
+	}
+	spawn = positionsParticles;
+	spawnVel = velocitiesParticles;
+	spawnOld = oldpositionsParticles;
+}
+
+void generateRandomPoints2()
+{
+	positionsParticles.resize(NUM_PARTICLES);
+	velocitiesParticles.resize(NUM_PARTICLES);
+	oldpositionsParticles.resize(NUM_PARTICLES);
+	colorParticles.resize(NUM_PARTICLES);
+
+	for (size_t i = 0; i < NUM_PARTICLES; i++)
+	{
+		float random = XMAX1 * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		glm::vec3 omega(0.0f, 0.4f + VXMAX1 * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))), 0.0f);
+		float r = RADIO + 0.2 * (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		float z = r * cos(random);
+		float x = r * sin(random);
+		glm::vec4 aux;
+		aux.x = sqrt(r * r - (z * z));
+		aux.y = YMIN + YMAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+		aux.z = sqrt(r * r - (x * x));
+		aux.w = PARTICLE_LIFETIME + (LIFETIME_MAX * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		positionsParticles[i] = aux;
+
+		glm::vec3 radio(aux.x, aux.y, aux.z);
+		glm::vec4 auxVel(glm::cross(omega, radio), 1.0);
+		velocitiesParticles[i] = auxVel;
+
+		oldpositionsParticles[i] = glm::vec4(0.0f, 0.0f, -4.0f, 1.0f);
+
+		float randomC1 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomC2 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomC3 = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float randomAlpha = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		colorParticles[i] = glm::vec4(randomC1, randomC2, randomC3, randomAlpha);
 	}
 	spawn = positionsParticles;
 	spawnVel = velocitiesParticles;

@@ -37,6 +37,9 @@ layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 const float dt = 0.001; 
 float G = 6.674 * pow(10, -11);
 float M1 = 10000000000.0;
+float M2 = 10000000000.0;
+
+const vec3 atractor2 = vec3(2.0, 0.0, 0.0);
 
 uint gid = gl_GlobalInvocationID.x;
 
@@ -60,8 +63,11 @@ void main()
 
 		float d = distance(p, vec3(0.0f));
 		vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * p;
+		
+		float d2 = distance(p, atractor2);
+		vec3 acelGrav2 = -G * M2 * (1 / (d2 * d2 * d2)) * (p - atractor2);
 
-		vec3 pp = 2*p - oldPos + dt*dt * acelGrav;
+		vec3 pp = 2*p - oldPos + dt*dt * acelGrav + dt*dt * acelGrav2;
 		vec3 vp = (pp - p) * (1.0 / dt);
 
 		lifetime -= deathTime;
