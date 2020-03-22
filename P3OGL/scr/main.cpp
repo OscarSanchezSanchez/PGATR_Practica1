@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <vector>
+#include <chrono>
 #include "Model/Model.h"
 #include "Constants.h"
 
@@ -30,7 +31,7 @@ float displacement = 0.1f;
 float displacementLight = 5.0f;
 //Giro de c�mara por teclado
 float yaw_angle = 0.01f;
-float time = 0.0f;
+float tiempo = 0.0f;
 
 float cameraDistanceZ = 3.0f;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, cameraDistanceZ);
@@ -146,7 +147,6 @@ std::vector<glm::vec4> spawnOld;
 
 //Declaración de CB
 void renderFunc();
-void renderParticles();
 void resizeFunc(int width, int height);
 void idleFunc();
 void keyboardFunc(unsigned char key, int x, int y);
@@ -158,28 +158,21 @@ void initContext(int argc, char** argv);
 void initOGL();
 void initObj();
 void initObj(Model model);
-void initSSBOrender(const char* computeName, struct computeProgram* computeProgram);
-void initSortCompute(const char* computeName, struct computeProgram* computeProgram);
 void destroy();
+
+//practica2
 void generateRandomPoints();
 void generateRandomPoints2();
-
-void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename,
-	struct program* program);
+void initSortCompute(const char* computeName, struct computeProgram* computeProgram);
+void initSSBOrender(const char* computeName, struct computeProgram* computeProgram);
+void initShader(const char* vname, const char* fname, const char* gname, const char* tcname, const char* tename, struct program* program);
 void initComputeShader(const char* computename, struct computeProgram* program);
-
 void firstStepVerlet();
 
-//Carga el shader indicado, devuele el ID del shader
-//!Por implementar
 GLuint loadShader(const char *fileName, GLenum type);
-
-//Crea una textura, la configura, la sube a OpenGL, 
-//y devuelve el identificador de la textura 
-//!!Por implementar
 unsigned int loadTex(const char *fileName);
 
-Model myModel("obj/teapot.obj");
+//Model myModel("obj/teapot.obj");
 
 int main(int argc, char** argv)
 {
@@ -187,14 +180,16 @@ int main(int argc, char** argv)
 	initContext(argc, argv);
 	initOGL();
 
-	generateRandomPoints2();
-	firstStepVerlet();
+	generateRandomPoints();
+	//firstStepVerlet();
 
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
 
-	initSSBOrender("../shaders_P3/shader.verlet2.comp", &computePrograms[0]);
-	initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
+	initSSBOrender("../shaders_P3/shader.RK.comp", &computePrograms[0]);
+
+	if (BITONIC)
+		initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
 
 	//initObj(myModel);
 
@@ -247,10 +242,9 @@ void initOGL(){
 
 	glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_CONSTANT_ALPHA);
-	//glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
-	glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
+	glBlendFunc(GL_SRC_COLOR, GL_SRC_ALPHA);
+	//glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 	glBlendEquation(GL_FUNC_ADD);
-
 
 	proj = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 50.0f);
 	view = glm::mat4(1.0f);
@@ -470,9 +464,7 @@ void initComputeShader(const char* computeName, struct computeProgram* computePr
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, posSSBO);
 	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-
-
+	
 }
 
 void firstStepVerlet()
@@ -777,18 +769,64 @@ void renderFunc()
 		glUniformMatrix4fv(uNormalMat, 1, GL_FALSE, &normal[0][0]);
 	}
 
-
-	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//compute integrator shader
-	glUseProgram(computePrograms[0].program);
-	float x = RADIO * glm::cos(2 * 3.1415 * time);
-	float z = RADIO * glm::sin(2 * 3.1415 * time);
-	time += ATRAC_INCR;
-	atractor = glm::vec3(x, 0.0, z);
-	glUniform1f(uIncrementx, x);
-	glUniform1f(uIncrementx, z);
-	//glUniform3fv(uAtractor, 3 * sizeof(float), &atractor[0]);
+	if (CPU) 
+	{
+		//std::chrono::high_resolution_clock::time_point clock0 = std::chrono::high_resolution_clock::now();
+		const float deathTime = 1;
+		const float dt = 0.001;
+		float G = 6.674 * pow(10, -11);
+		float M1 = 10000000000.0;
+		for (size_t i = 0; i < NUM_PARTICLES; i++)
+		{
+			glm::vec3 p(positionsParticles[i]);
+			float lifetime = positionsParticles[i].w;
+			if (lifetime < 0)
+			{
+				positionsParticles[i] = spawn[i];
+				velocitiesParticles[i] = spawnVel[i];
+				oldpositionsParticles[i] = spawnOld[i];
+			}
+			else
+			{
+				glm::vec3 v(velocitiesParticles[i]);
+				glm::vec3 oldPos(oldpositionsParticles[i]);
+
+				float d = glm::distance(p, glm::vec3(0.0f));
+				glm::vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * p;
+
+				glm::vec3 pp = 2.0f * p - oldPos + dt * dt * acelGrav;
+				glm::vec3 vp = (pp - p) * (1.0f / dt);
+
+				lifetime -= deathTime;
+				
+				oldpositionsParticles[i] = glm::vec4(p,lifetime);
+				positionsParticles[i] = glm::vec4(pp, lifetime);
+				velocitiesParticles[i] = glm::vec4(vp,1.0f);
+			}
+		}
+		//std::cout << "Integrator verlet CPU done in  " << std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - clock0).count() << " seconds" << std::endl;
+		
+	}
+	else
+	{ 
+		//std::chrono::high_resolution_clock::time_point clock0 = std::chrono::high_resolution_clock::now();
+		//compute integrator shader
+		glUseProgram(computePrograms[0].program);
+		if (ATRACTOR_MOVEMENT)
+		{
+			float x = RADIO * glm::cos(2 * 3.1415 * tiempo);
+			float z = RADIO * glm::sin(2 * 3.1415 * tiempo);
+			tiempo += ATRAC_INCR;
+			atractor = glm::vec3(x, 0.0, z);
+			glUniform1f(uIncrementx, x);
+			glUniform1f(uIncrementx, z);
+			//glUniform3fv(uAtractor, 3 * sizeof(float), &atractor[0]);
+		}
+		//std::cout << "Integrator verlet GPU done in  " << (std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - clock0).count()) << " frecuencia de calculo" << std::endl;
+	}
+	
+	
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -821,11 +859,6 @@ void renderFunc()
 
 	glutSwapBuffers();
 }
-
-void renderParticles()
-{
-}
-	
 
 void resizeFunc(int width, int height)
 {

@@ -27,3 +27,5 @@
 #define ATRAC_INCR 0.1
 
 #define BITONIC false
+#define ATRACTOR_MOVEMENT false
+#define CPU false
