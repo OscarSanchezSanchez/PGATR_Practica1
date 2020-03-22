@@ -76,5 +76,11 @@
     <None Include="..\shaders_P3\shader.verlet.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="..\shaders_P3\shader.RK2.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="..\shaders_P3\shader.verlet2.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

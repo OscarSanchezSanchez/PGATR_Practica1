@@ -34,7 +34,8 @@ float G = 6.674 * pow(10, -11);
 float M1 = 10000000000.0;
 float M2 = 10000000000.0;
 const float deathTime = 1;
-const vec3 atractor2 = vec3(2.0, 0.0, 0.0);
+//const vec3 atractor = vec3(2.0, 0.0, 0.0);
+uniform vec3 atractor;
 
 uint gid = gl_GlobalInvocationID.x;
 
@@ -58,8 +59,8 @@ void main()
 		float d = distance(x, vec3(0.0f));
 		vec3 acelGrav = -G * M1 * (1 / (d * d * d)) * x;
 
-		float d2 = distance(x, atractor2);
-		vec3 acelGrav2 = -G * M2 * (1 / (d2 * d2 * d2)) * (x - atractor2);
+		float d2 = distance(x, atractor);
+		vec3 acelGrav2 = -G * M2 * (1 / (d2 * d2 * d2)) * (x - atractor);
 
 		vec3 vp = v + 0.5*dt*acelGrav + 0.5*dt*acelGrav2;
 		vec3 xp = x + 0.5 * dt * vp;
@@ -67,8 +68,8 @@ void main()
 		d = distance(xp, vec3(0.0f));
 		acelGrav = -G * M1 * (1 / (d * d * d)) * xp;
 
-		d2 = distance(xp, atractor2);
-		acelGrav2 = -G * M2 * (1 / (d2 * d2 * d2)) * (xp - atractor2);
+		d2 = distance(xp, atractor);
+		acelGrav2 = -G * M2 * (1 / (d2 * d2 * d2)) * (xp - atractor);
 
 		xp = x0 + vp*dt;
 		vp = v0 + acelGrav*dt + acelGrav2*dt;

@@ -30,6 +30,7 @@ float displacement = 0.1f;
 float displacementLight = 5.0f;
 //Giro de c�mara por teclado
 float yaw_angle = 0.01f;
+float time = 0.0f;
 
 float cameraDistanceZ = 3.0f;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, cameraDistanceZ);
@@ -85,7 +86,11 @@ int uNormalMat;
 int uProjectionMatrix;
 int uStage;
 int uSubStage;
+int uAtractor;
+int uIncrementx;
+int uIncrementz;
 
+glm::vec3 atractor(0.0f);
 
 //Variables uniformes posición e intesidad de la luz
 int uLightPosition;
@@ -651,6 +656,9 @@ void initSSBOrender(const char* computeName, struct computeProgram* computeProgr
 
 	alphaTexId = loadTex("../img/2.png");
 	
+	//uAtractor = glGetUniformLocation(computeProgram->program, "atractor");
+	uIncrementx = glGetUniformLocation(computeProgram->program, "add_x");
+	uIncrementz = glGetUniformLocation(computeProgram->program, "add_z");
 }
 
 void initSortCompute(const char* computeName, struct computeProgram* computeProgram)
@@ -768,10 +776,19 @@ void renderFunc()
 	{
 		glUniformMatrix4fv(uNormalMat, 1, GL_FALSE, &normal[0][0]);
 	}
+
+
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//compute integrator shader
 	glUseProgram(computePrograms[0].program);
+	float x = RADIO * glm::cos(2 * 3.1415 * time);
+	float z = RADIO * glm::sin(2 * 3.1415 * time);
+	time += ATRAC_INCR;
+	atractor = glm::vec3(x, 0.0, z);
+	glUniform1f(uIncrementx, x);
+	glUniform1f(uIncrementx, z);
+	//glUniform3fv(uAtractor, 3 * sizeof(float), &atractor[0]);
 	glDispatchCompute(NUM_PARTICLES / WORK_GROUP_SIZE, 1, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -795,7 +812,6 @@ void renderFunc()
 
 	//drawing shader
 	glUseProgram(programs[0].program);
-	//Texturas  
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, alphaTexId);
 

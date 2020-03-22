@@ -24,5 +24,6 @@
 #define XMAX1 0.1 * 3.1415
 #define RADIO 1
 #define VXMAX1 0.5
+#define ATRAC_INCR 0.1
 
 #define BITONIC false
