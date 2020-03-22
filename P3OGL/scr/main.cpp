@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 	initShader("../shaders_P3/shader.v0.vert", "../shaders_P3/shader.v0.frag", "../shaders_P3/shader.v0.geo",
 		"../shaders_P3/shader.v0.tcs", "../shaders_P3/shader.v0.tes", &programs[0]);
 
-	initSSBOrender("../shaders_P3/shader.RK.comp", &computePrograms[0]);
+	initSSBOrender("../shaders_P3/shader.RK2.comp", &computePrograms[0]);
 
 	if (BITONIC)
 		initSortCompute("../shaders_P3/shader.bitonicSort.comp", &computePrograms[1]);
@@ -823,7 +823,7 @@ void renderFunc()
 			glUniform1f(uIncrementx, z);
 			//glUniform3fv(uAtractor, 3 * sizeof(float), &atractor[0]);
 		}
-		//std::cout << "Integrator verlet GPU done in  " << (std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - clock0).count()) << " frecuencia de calculo" << std::endl;
+		//std::cout << "Integrator verlet GPU done in  " << (std::chrono::duration<float>(std::chrono::high_resolution_clock::now() - clock0).count()) << " seconds" << std::endl;
 	}
 	
 	
