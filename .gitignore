@@ -31,3 +31,11 @@
 *.out
 *.app
 *.vs
+
+# Debug
+P3OGL\Debug
+*Debug/
+#*/debug/
+
+*Debug\
+#*\debug\
